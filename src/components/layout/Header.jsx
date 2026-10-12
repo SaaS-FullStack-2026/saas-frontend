@@ -1,6 +1,13 @@
-import { Bell, UserCircle, Building } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, UserCircle, Building, LogOut } from 'lucide-react';
 
 export default function Header() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/login');
+  };
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 shadow-xs">
       {/* Tenant / Empresa Info */}
@@ -11,11 +18,11 @@ export default function Header() {
         </div>
       </div>
 
-      {/* User & Notifications */}
+      {/* User, Notifications & Logout */}
       <div className="flex items-center gap-4">
         <button 
           title="Notificações" 
-          className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors relative"
+          className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors relative cursor-pointer"
         >
           <Bell size={19} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-600 rounded-full"></span>
@@ -30,6 +37,17 @@ export default function Header() {
             <span className="block text-xs text-slate-500 leading-tight">Administrador</span>
           </div>
         </div>
+
+        <div className="h-6 w-px bg-slate-200"></div>
+
+        {/* Botão de Logout */}
+        <button
+          onClick={handleLogout}
+          title="Sair do Sistema"
+          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+        >
+          <LogOut size={19} />
+        </button>
       </div>
     </header>
   );
