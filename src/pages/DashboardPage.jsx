@@ -1,31 +1,68 @@
-import { CheckCircle2, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import api from '../services/api';
+import { CheckCircle2, Clock, TrendingUp, AlertTriangle, Layers, RotateCw } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [ordens, setOrdens] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const carregarMetricas = async () => {
+    try {
+      setCarregando(true);
+      const res = await api.get('/ordens-servico');
+      setOrdens(res.data);
+    } catch (err) {
+      console.error('Erro ao buscar dados do dashboard:', err);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarMetricas();
+  }, []);
+
+  const abertas = ordens.filter((o) => o.status === 'ABERTA' || o.status === 'ATRIBUIDA').length;
+  const emAtendimento = ordens.filter((o) => o.status === 'EM_DESLOCAMENTO' || o.status === 'EM_ATENDIMENTO').length;
+  const concluidas = ordens.filter((o) => o.status === 'CONCLUIDA').length;
+
   const cards = [
-    { title: 'Ordens em Aberto', count: '12', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { title: 'Em Atendimento', count: '5', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Concluídas Hoje', count: '28', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { title: 'SLA em Risco', count: '2', icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50' },
+    { title: 'Ordens Pendentes', count: abertas, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { title: 'Em Execução / Campo', count: emAtendimento, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Concluídas', count: concluidas, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { title: 'Total Cadastrado', count: ordens.length, icon: Layers, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard Operacional</h1>
-        <p className="text-sm text-slate-500">Métricas em tempo real das atividades de campo e SLAs da sua organização.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard Operacional</h1>
+          <p className="text-sm text-slate-500">Métricas consolidadas em tempo real das atividades da sua equipe.</p>
+        </div>
+        <button
+          onClick={carregarMetricas}
+          disabled={carregando}
+          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3 py-2 rounded-lg text-sm shadow-2xs transition-colors cursor-pointer"
+        >
+          <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
+          <span>Atualizar</span>
+        </button>
       </div>
 
-      {/* Cards de Métricas */}
+      {/* Cards de Métricas Reais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
             <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{c.title}</p>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1">{c.count}</h3>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{c.title}</p>
+                <h3 className="text-3xl font-bold text-slate-900 mt-1">
+                  {carregando ? '...' : c.count}
+                </h3>
               </div>
-              <div className={`p-3 rounded-lg ${c.bg} ${c.color}`}>
+              <div className={`p-3 rounded-xl ${c.bg} ${c.color}`}>
                 <Icon size={24} />
               </div>
             </div>
@@ -33,14 +70,22 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Bloco de Atividades Recentes */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
-        <h2 className="text-lg font-semibold text-slate-900 mb-3">Visão Geral da Máquina de Estados</h2>
-        <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-sm text-slate-600 flex items-center justify-between">
-          <span className="font-semibold text-slate-700">Fluxo da Tarefa:</span>
-          <span className="font-mono text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
-            Aberta ➔ Atribuída ➔ Em Deslocamento ➔ Em Atendimento ➔ Concluída
-          </span>
+      {/* Bloco da Máquina de Estados */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <h2 className="text-lg font-bold text-slate-900">Máquina de Estados Unidirecional (Field Service SLA)</h2>
+        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <span className="font-semibold text-slate-700">Ciclo de Vida da Ordem:</span>
+          <div className="flex items-center flex-wrap gap-2 text-xs font-mono">
+            <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded font-semibold">1. Aberta</span>
+            <span className="text-slate-400">➔</span>
+            <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded font-semibold">2. Atribuída</span>
+            <span className="text-slate-400">➔</span>
+            <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded font-semibold">3. Deslocamento</span>
+            <span className="text-slate-400">➔</span>
+            <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded font-semibold">4. Atendimento</span>
+            <span className="text-slate-400">➔</span>
+            <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded font-semibold">5. Concluída</span>
+          </div>
         </div>
       </div>
     </div>

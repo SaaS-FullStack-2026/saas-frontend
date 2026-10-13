@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Layers, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Layers, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('gestor@fieldops.com');
+  const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState(null);
 
   // Status de conexão com o backend
   const [apiStatus, setApiStatus] = useState({ online: false, checking: true, text: 'Verificando conexão...' });
@@ -23,28 +24,90 @@ export default function LoginPage() {
       });
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErro(null);
 
-    // Simulação de autenticação rápida
-    setTimeout(() => {
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        senha: password,
+      });
+
+      const { token, perfil } = response.data;
+
+      // Armazenar sessão
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(response.data));
+
+      // Redirecionamento baseado no papel RBAC
+      if (perfil === 'AGENTE') {
+        navigate('/mobile');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Falha de autenticação:', err);
+      setErro(err.response?.data?.erro || 'Credenciais inválidas ou servidor indisponível.');
+    } finally {
       setLoading(false);
-      navigate('/dashboard');
-    }, 600);
+    }
+  };
+
+  const preencherCredenciais = (tipo) => {
+    if (tipo === 'gestor') {
+      setEmail('gestor@fieldops.com');
+      setPassword('123456');
+    } else {
+      setEmail('tecnico@fieldops.com');
+      setPassword('123456');
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
         {/* Top Header */}
-        <div className="p-8 pb-6 text-center">
-          <div className="inline-flex p-3 bg-blue-600 rounded-xl text-white mb-4 shadow-sm">
+        <div className="p-8 pb-5 text-center">
+          <div className="inline-flex p-3 bg-blue-600 rounded-xl text-white mb-3 shadow-sm">
             <Layers size={32} />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">FieldOps</h1>
-          <p className="text-sm text-slate-500 mt-1">Gestão Inteligente de Operações em Campo</p>
+          <p className="text-xs text-slate-500 mt-1">Gestão Inteligente de Operações em Campo</p>
         </div>
+
+        {/* Quick Fill Buttons para Teste Ágil */}
+        <div className="px-8 pb-3">
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs flex items-center justify-between gap-2">
+            <span className="text-slate-500 font-medium flex items-center gap-1">
+              <Sparkles size={13} className="text-amber-500" /> Acesso Rápido:
+            </span>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => preencherCredenciais('gestor')}
+                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-slate-700 font-medium text-2xs transition-colors cursor-pointer"
+              >
+                Gestor
+              </button>
+              <button
+                type="button"
+                onClick={() => preencherCredenciais('tecnico')}
+                className="px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-slate-700 font-medium text-2xs transition-colors cursor-pointer"
+              >
+                Técnico
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {erro && (
+          <div className="mx-8 mb-2 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2">
+            <AlertCircle size={15} className="shrink-0" />
+            <span>{erro}</span>
+          </div>
+        )}
 
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-4">
@@ -86,19 +149,11 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center text-slate-600 cursor-pointer">
-              <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 mr-2" />
-              Lembrar de mim
-            </label>
-            <a href="#recuperar" className="text-blue-600 hover:underline font-medium">Esqueceu a senha?</a>
           </div>
 
           <button
@@ -106,7 +161,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm shadow-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-70"
           >
-            {loading ? 'Acessando...' : (
+            {loading ? 'Autenticando via JWT...' : (
               <>
                 <span>Entrar no FieldOps</span>
                 <ArrowRight size={18} />
