@@ -9,11 +9,15 @@ export default function DashboardPage() {
   const carregarMetricas = async () => {
     try {
       setCarregando(true);
-      const res = await api.get('/ordens-servico');
+      // Tenta buscar os dados com timeout de 5 segundos
+      const res = await api.get('/ordens-servico', { timeout: 5000 });
       setOrdens(res.data);
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err);
+      // Exibe aviso amigável para o usuário caso o backend não responda
+      alert('Não foi possível conectar com o servidor. Verifique se o back-end em Spring Boot está em execução.');
     } finally {
+      // O bloco 'finally' GARANTE que a tela nunca trave no estado "Atualizando..."
       setCarregando(false);
     }
   };
@@ -33,6 +37,14 @@ export default function DashboardPage() {
     { title: 'Total Cadastrado', count: ordens.length, icon: Layers, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
+  const passosMaquinaEstados = [
+    { label: '1. Aberta', bg: 'bg-amber-100 hover:bg-amber-200 text-amber-800' },
+    { label: '2. Atribuída', bg: 'bg-blue-100 hover:bg-blue-200 text-blue-800' },
+    { label: '3. Deslocamento', bg: 'bg-indigo-100 hover:bg-indigo-200 text-indigo-800' },
+    { label: '4. Atendimento', bg: 'bg-purple-100 hover:bg-purple-200 text-purple-800' },
+    { label: '5. Concluída', bg: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800' },
+  ];
+
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* Cabeçalho */}
@@ -44,24 +56,30 @@ export default function DashboardPage() {
         <button
           onClick={carregarMetricas}
           disabled={carregando}
-          className="self-start sm:self-auto inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+          className={`self-start sm:self-auto inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-4 py-2 rounded-lg text-xs sm:text-sm shadow-xs transition-all ${
+            carregando ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer active:scale-95'
+          }`}
         >
-          <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
-          <span>Atualizar</span>
+          <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
+          <span>{carregando ? 'Atualizando...' : 'Atualizar'}</span>
         </button>
       </div>
 
-      {/* Cards de Métricas Reais */}
+      {/* Cards de Métricas com Skeleton Loaders */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
-            <div key={i} className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
-              <div>
+            <div key={i} className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:border-slate-300">
+              <div className="space-y-1">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{c.title}</p>
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-                  {carregando ? '...' : c.count}
-                </h3>
+                {carregando ? (
+                  <div className="h-8 w-16 bg-slate-200 rounded-md animate-pulse my-1" />
+                ) : (
+                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                    {c.count}
+                  </h3>
+                )}
               </div>
               <div className={`p-3 rounded-xl ${c.bg} ${c.color}`}>
                 <Icon size={24} />
@@ -71,7 +89,7 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Bloco da Máquina de Estados */}
+      {/* Bloco da Máquina de Estados Interativa */}
       <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-xs space-y-3 sm:space-y-4">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-slate-900">Máquina de Estados Unidirecional</h2>
@@ -81,15 +99,16 @@ export default function DashboardPage() {
         <div className="p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 text-sm">
           <div className="overflow-x-auto pb-1">
             <div className="flex items-center gap-2 text-xs font-mono min-w-max">
-              <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-md font-semibold">1. Aberta</span>
-              <span className="text-slate-400">➔</span>
-              <span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md font-semibold">2. Atribuída</span>
-              <span className="text-slate-400">➔</span>
-              <span className="px-2.5 py-1 bg-indigo-100 text-indigo-800 rounded-md font-semibold">3. Deslocamento</span>
-              <span className="text-slate-400">➔</span>
-              <span className="px-2.5 py-1 bg-purple-100 text-purple-800 rounded-md font-semibold">4. Atendimento</span>
-              <span className="text-slate-400">➔</span>
-              <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md font-semibold">5. Concluída</span>
+              {passosMaquinaEstados.map((passo, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className={`px-3 py-1.5 rounded-md font-semibold cursor-pointer transition-all ${passo.bg} shadow-2xs active:scale-95`}>
+                    {passo.label}
+                  </span>
+                  {idx < passosMaquinaEstados.length - 1 && (
+                    <span className="text-slate-400 font-bold">➔</span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
