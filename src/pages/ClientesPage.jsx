@@ -23,18 +23,18 @@ export default function ClientesPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Clientes Corporativos</h1>
-          <p className="text-sm text-slate-500">Base cadastral de empresas e pontos de atendimento atendidos.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Clientes Corporativos</h1>
+          <p className="text-xs sm:text-sm text-slate-500">Base cadastral de empresas e pontos de atendimento atendidos.</p>
         </div>
         <button
           onClick={carregarClientes}
           disabled={carregando}
-          className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-sm shadow-2xs transition-colors cursor-pointer"
+          className="self-start sm:self-auto inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
         >
-          <RotateCw size={16} className={carregando ? 'animate-spin' : ''} />
+          <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
           <span>Atualizar</span>
         </button>
       </div>
