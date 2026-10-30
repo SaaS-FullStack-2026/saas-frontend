@@ -27,8 +27,8 @@ COPY --from=builder /app/dist .
 # Copia o template de configuração do Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-# Porta padrão (sobrescrita dinamicamente em runtime pelo Railway via $PORT)
+# Expõe as portas padrão
 EXPOSE 80
 
-# Substitui LISTEN_PORT pelo $PORT atribuído pelo Railway (ou 80 como fallback) e inicia o Nginx
-CMD ["/bin/sh", "-c", "sed 's/LISTEN_PORT/'\"${PORT:-80}\"'/g' /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Inicia o Nginx escutando tanto na porta 80 quanto na variável $PORT do Railway (garantindo que nunca haja mismatch de portas 502)
+CMD ["/bin/sh", "-c", "if [ -n \"$PORT\" ] && [ \"$PORT\" != \"80\" ]; then sed 's/LISTEN_DIRECTIVES/listen 80; listen '\"$PORT\"';/g' /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf; else sed 's/LISTEN_DIRECTIVES/listen 80;/g' /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf; fi && nginx -g 'daemon off;'"]
