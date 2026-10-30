@@ -5,7 +5,9 @@ import {
   Users, 
   Building2, 
   Activity,
-  Layers
+  Layers,
+  Smartphone,
+  X
 } from 'lucide-react';
 
 const menuItems = [
@@ -16,18 +18,33 @@ const menuItems = [
   { path: '/status', label: 'Status da API', icon: Activity },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   return (
-    <aside className="w-64 bg-slate-900 text-slate-100 flex flex-col h-screen shrink-0 border-r border-slate-800">
-      {/* Brand / Logo */}
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
-        <div className="p-2 bg-blue-600 rounded-lg text-white">
-          <Layers size={22} />
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-100 flex flex-col h-screen shrink-0 border-r border-slate-800 transition-transform duration-300 ease-in-out md:static md:w-64 md:translate-x-0 ${
+        isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      }`}
+    >
+      {/* Brand / Logo + Botão Fechar no Mobile */}
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-600 rounded-lg text-white">
+            <Layers size={22} />
+          </div>
+          <div>
+            <span className="font-bold text-lg tracking-tight block">FieldOps</span>
+            <span className="text-xs text-slate-400 block -mt-1">SaaS Gestão em Campo</span>
+          </div>
         </div>
-        <div>
-          <span className="font-bold text-lg tracking-tight block">FieldOps</span>
-          <span className="text-xs text-slate-400 block -mt-1">SaaS Gestão em Campo</span>
-        </div>
+
+        {/* Botão de Fechar exclusivo do mobile */}
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 md:hidden cursor-pointer"
+          title="Fechar Menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {/* Navigation Links */}
@@ -41,6 +58,7 @@ export default function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -54,6 +72,21 @@ export default function Sidebar() {
             </NavLink>
           );
         })}
+
+        {/* Divisor e Atalho para Modo Técnico */}
+        <div className="pt-4 mt-4 border-t border-slate-800">
+          <div className="text-xs font-semibold uppercase text-slate-400 px-3 mb-2 tracking-wider">
+            Visão de Campo
+          </div>
+          <NavLink
+            to="/mobile"
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-400 hover:bg-amber-950/40 hover:text-amber-300 transition-colors"
+          >
+            <Smartphone size={18} />
+            <span>Modo Técnico Mobile</span>
+          </NavLink>
+        </div>
       </nav>
 
       {/* Footer Info */}

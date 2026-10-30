@@ -58,12 +58,12 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
         {/* Cabeçalho do Modal */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2 text-slate-800 font-bold text-lg">
-            <ClipboardPlus size={22} className="text-blue-600" />
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
+          <div className="flex items-center gap-2 text-slate-800 font-bold text-base sm:text-lg">
+            <ClipboardPlus size={20} className="text-blue-600 sm:w-[22px] sm:h-[22px]" />
             <h3>Nova Ordem de Serviço</h3>
           </div>
           <button
@@ -74,8 +74,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Formulário com scroll vertical se a tela for pequena */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
               Título do Serviço *

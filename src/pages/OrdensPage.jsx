@@ -54,53 +54,53 @@ export default function OrdensPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ordens de Serviço</h1>
-          <p className="text-sm text-slate-500">Gestão e acompanhamento das tarefas de campo em tempo real.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Ordens de Serviço</h1>
+          <p className="text-xs sm:text-sm text-slate-500">Gestão e acompanhamento das tarefas de campo em tempo real.</p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={carregarOrdens}
             disabled={carregando}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-sm shadow-2xs transition-colors cursor-pointer"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
           >
-            <RotateCw size={16} className={carregando ? 'animate-spin' : ''} />
+            <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
             <span>Atualizar</span>
           </button>
           <button
             onClick={() => setModalAberto(true)}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-sm shadow-xs transition-colors cursor-pointer"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
           >
-            <Plus size={18} />
-            Nova Ordem
+            <Plus size={16} />
+            <span>Nova Ordem</span>
           </button>
         </div>
       </div>
 
       {erro && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm flex items-center gap-3">
-          <AlertCircle size={20} className="shrink-0" />
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center gap-3">
+          <AlertCircle size={18} className="shrink-0" />
           <span>{erro}</span>
         </div>
       )}
 
       {/* Tabela de Ordens */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex-1 max-w-sm">
-            <Search size={16} className="text-slate-400" />
+        <div className="p-3 sm:p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full sm:max-w-sm">
+            <Search size={16} className="text-slate-400 shrink-0" />
             <input 
               type="text" 
               placeholder="Buscar por código, cliente ou serviço..." 
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="bg-transparent border-none text-sm focus:outline-none w-full text-slate-700"
+              className="bg-transparent border-none text-xs sm:text-sm focus:outline-none w-full text-slate-700"
             />
           </div>
-          <button className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50">
-            <Filter size={16} /> Filtros
+          <button className="self-end sm:self-auto flex items-center gap-1.5 text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-medium border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+            <Filter size={15} /> <span>Filtros</span>
           </button>
         </div>
 
