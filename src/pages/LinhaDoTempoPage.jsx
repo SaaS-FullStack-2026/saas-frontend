@@ -13,6 +13,8 @@ import {
   Truck, 
   CheckCircle2, 
   AlertCircle, 
+  AlertTriangle,
+  MapPin,
   GripVertical, 
   Layers, 
   Filter, 
@@ -29,6 +31,49 @@ const HORAS_TIMELINE = Array.from(
   (_, i) => i + HORA_INICIAL_TIMELINE
 ); // 06:00 até 23:00
 const LARGURA_HORA_PX = 120; // 120px por hora para clareza visual
+
+function calcularAtraso(os) {
+  if (!os?.dataAgendamento || os.status === 'CONCLUIDA' || os.status === 'CANCELADA') {
+    return { atrasada: false };
+  }
+
+  const agora = new Date();
+  const dataAg = new Date(os.dataAgendamento);
+
+  // Apenas considera atraso no dia de hoje ou em datas passadas
+  const dataAgStr = dataAg.toISOString().split('T')[0];
+  const hojeStr = agora.toISOString().split('T')[0];
+  if (dataAgStr > hojeStr) {
+    return { atrasada: false };
+  }
+
+  const deslocamentoMinutos = os.tempoDeslocamentoMinutos || 30;
+  const horaSaidaPrevista = new Date(dataAg.getTime() - deslocamentoMinutos * 60000);
+
+  // 1. Já passou do momento previsto para iniciar o trânsito/deslocamento e o técnico ainda não saiu
+  if (agora > horaSaidaPrevista && (os.status === 'ABERTA' || os.status === 'ATRIBUIDA')) {
+    const minutos = Math.max(1, Math.round((agora - horaSaidaPrevista) / 60000));
+    return {
+      atrasada: true,
+      tipo: 'DESLOCAMENTO',
+      minutosAtraso: minutos,
+      mensagem: `Deveria ter iniciado deslocamento há ${minutos}m`
+    };
+  }
+
+  // 2. Já passou da hora agendada de atendimento e ainda não está em atendimento no cliente
+  if (agora > dataAg && os.status !== 'EM_ATENDIMENTO') {
+    const minutos = Math.max(1, Math.round((agora - dataAg) / 60000));
+    return {
+      atrasada: true,
+      tipo: 'ATENDIMENTO',
+      minutosAtraso: minutos,
+      mensagem: `Início de atendimento atrasado há ${minutos}m`
+    };
+  }
+
+  return { atrasada: false };
+}
 
 function obterInfoAtivo(os) {
   if (os.equipamento) {
@@ -114,6 +159,10 @@ export default function LinhaDoTempoPage() {
     });
   }, [ordens, dataSelecionada]);
 
+  const ordensAtrasadasHoje = useMemo(() => {
+    return ordensDoDia.filter((o) => calcularAtraso(o).atrasada);
+  }, [ordensDoDia]);
+
   const ordensFilaEspera = useMemo(() => {
     return ordens.filter((o) => !o.agente || o.status === 'ABERTA');
   }, [ordens]);
@@ -144,14 +193,14 @@ export default function LinhaDoTempoPage() {
     if (!draggedOS) return;
 
     try {
-      // Monta nova data de agendamento na hora solta (fuso local)
+      // Monta nova data de agendamento com timezone completo ISO-8601
       const horaStr = String(hora).padStart(2, '0');
-      const novaDataIso = `${dataSelecionada}T${horaStr}:00:00`;
+      const dataIso = new Date(`${dataSelecionada}T${horaStr}:00:00`).toISOString();
 
       // Chamada à API com recálculo inteligente no backend
       const res = await api.patch(`/ordens-servico/${draggedOS.id}/reagendar`, {
         agenteId: tecnicoId,
-        dataAgendamento: novaDataIso,
+        dataAgendamento: dataIso,
         duracaoEstimadaMinutos: draggedOS.duracaoEstimadaMinutos || 60,
         tempoDeslocamentoMinutos: draggedOS.tempoDeslocamentoMinutos || 30
       });
@@ -233,6 +282,17 @@ export default function LinhaDoTempoPage() {
             onChange={(e) => setDataSelecionada(e.target.value)}
             className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
           />
+
+          {/* Alerta de Ordens em Atraso Hoje */}
+          {ordensAtrasadasHoje.length > 0 && (
+            <div 
+              title={`${ordensAtrasadasHoje.length} ordens com deslocamento ou atendimento atrasado hoje`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold animate-pulse shadow-2xs"
+            >
+              <AlertTriangle size={14} className="text-rose-600 shrink-0" />
+              <span>{ordensAtrasadasHoje.length} em Atraso</span>
+            </div>
+          )}
 
           <button
             onClick={() => setExibirFilaEspera(!exibirFilaEspera)}
@@ -478,7 +538,12 @@ export default function LinhaDoTempoPage() {
 
                         const ativo = obterInfoAtivo(o);
 
+                        const atraso = calcularAtraso(o);
+
                         const corStatus = (() => {
+                          if (atraso.atrasada) {
+                            return 'bg-rose-50/90 border-rose-400 text-rose-950 ring-2 ring-rose-500 shadow-md';
+                          }
                           switch (o.status) {
                             case 'EM_DESLOCAMENTO': return 'bg-indigo-50 border-indigo-300 text-indigo-900';
                             case 'EM_ATENDIMENTO': return 'bg-purple-50 border-purple-400 text-purple-900 ring-2 ring-purple-300';
@@ -498,12 +563,17 @@ export default function LinhaDoTempoPage() {
                                   top: '16px',
                                   height: '60px'
                                 }}
-                                title={`Deslocamento estimado: ${deslocamentoMinutos} min até o cliente`}
+                                title={`Deslocamento estimado: ${deslocamentoMinutos} min${o.distanciaDeslocamentoKm ? ` (${o.distanciaDeslocamentoKm.toFixed(1)} km em rota urbana)` : ''}`}
                                 className="absolute rounded-l-lg bg-amber-400/20 border-y border-l border-dashed border-amber-400 flex items-center justify-center text-[10px] text-amber-800 font-semibold pointer-events-none z-10 px-1"
                               >
-                                <span className="truncate flex items-center gap-1">
-                                  <Truck size={12} className="shrink-0" />
-                                  <span className="hidden sm:inline">{deslocamentoMinutos}m</span>
+                                <span className="truncate flex items-center gap-1 font-mono text-[9px] sm:text-[10px]">
+                                  <Truck size={12} className="shrink-0 text-amber-700" />
+                                  <span>{deslocamentoMinutos}m</span>
+                                  {o.distanciaDeslocamentoKm && (
+                                    <span className="hidden md:inline text-[9px] text-amber-700 font-medium">
+                                      ({o.distanciaDeslocamentoKm.toFixed(1)}km)
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                             )}
@@ -519,16 +589,24 @@ export default function LinhaDoTempoPage() {
                               draggable="true"
                               onDragStart={(e) => handleDragStart(e, o)}
                               onClick={() => setOsSelecionada(o)}
+                              title={atraso.atrasada ? `${atraso.mensagem} • Clique para ver detalhes` : undefined}
                               className={`absolute rounded-xl border p-2 shadow-xs hover:shadow-md cursor-grab active:cursor-grabbing transition-all z-20 flex flex-col justify-between overflow-hidden group ${corStatus}`}
                             >
                               <div className="flex items-center justify-between gap-1 leading-tight">
                                 <span className="font-mono text-[10px] font-bold text-blue-700">
                                   #{o.id}
                                 </span>
-                                <span className="text-[10px] font-semibold truncate flex items-center gap-0.5">
-                                  <span>{ativo.emoji}</span>
-                                  <span className="truncate">{ativo.nome.split(' ')[0]}</span>
-                                </span>
+                                {atraso.atrasada ? (
+                                  <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 bg-rose-600 text-white rounded shadow-2xs animate-pulse truncate">
+                                    <AlertTriangle size={9} />
+                                    <span>{atraso.minutosAtraso}m</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold truncate flex items-center gap-0.5">
+                                    <span>{ativo.emoji}</span>
+                                    <span className="truncate">{ativo.nome.split(' ')[0]}</span>
+                                  </span>
+                                )}
                               </div>
 
                               <p className="font-bold text-[11px] truncate text-slate-900 group-hover:text-blue-600">

@@ -18,15 +18,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor de Resposta: logout e redirecionamento com aviso caso o token expire (401 ou 403)
+// Interceptor de Resposta: logout e redirecionamento caso o token expire (401 ou 403)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login?expirado=true';
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+      const isPublicEndpoint = url.includes('/rastreio') || url.includes('/status') || url.includes('/developers');
+
+      if (!isAuthEndpoint && !isPublicEndpoint) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expirado=true';
+        }
       }
     }
     return Promise.reject(error);
