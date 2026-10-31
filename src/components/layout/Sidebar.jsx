@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ClipboardList, 
+  Map,
   Users, 
   Building2, 
   Activity,
@@ -13,6 +14,7 @@ import {
 const menuItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/ordens', label: 'Ordens de Serviço', icon: ClipboardList },
+  { path: '/mapa', label: 'Mapa Operacional', icon: Map },
   { path: '/usuarios', label: 'Usuários', icon: Users },
   { path: '/clientes', label: 'Clientes', icon: Building2 },
   { path: '/status', label: 'Status da API', icon: Activity },

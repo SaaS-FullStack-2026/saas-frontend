@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2 } from 'lucide-react';
+import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2, Tag, AlertTriangle } from 'lucide-react';
 
 export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [clienteId, setClienteId] = useState('');
   const [agenteId, setAgenteId] = useState('');
+  const [tipoServico, setTipoServico] = useState('PREVENTIVA');
+  const [prioridade, setPrioridade] = useState('MEDIA');
 
   const [clientes, setClientes] = useState([]);
   const [agentes, setAgentes] = useState([]);
@@ -47,6 +49,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
     setDescricao('');
     setClienteId('');
     setAgenteId('');
+    setTipoServico('PREVENTIVA');
+    setPrioridade('MEDIA');
     setErro(null);
   };
 
@@ -82,6 +86,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
         gestorId: user.id || 1,
         clienteId: Number(clienteId),
         agenteId: agenteId ? Number(agenteId) : null,
+        tipoServico,
+        prioridade,
       });
 
       resetFormulario();
@@ -177,6 +183,45 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
                 {agentes.map((a) => (
                   <option key={a.id} value={a.id}>{a.nome}</option>
                 ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Grid de Tipo de Serviço e Prioridade */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Tipo de Serviço */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Tag size={13} className="text-slate-400" /> Tipo de Serviço
+              </label>
+              <select
+                disabled={salvando}
+                value={tipoServico}
+                onChange={(e) => setTipoServico(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <option value="PREVENTIVA">Manutenção Preventiva</option>
+                <option value="CORRETIVA">Manutenção Corretiva</option>
+                <option value="INSTALACAO">Instalação de Ativo</option>
+                <option value="VISTORIA">Vistoria / Inspeção</option>
+              </select>
+            </div>
+
+            {/* Nível de Prioridade */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <AlertTriangle size={13} className="text-slate-400" /> Prioridade
+              </label>
+              <select
+                disabled={salvando}
+                value={prioridade}
+                onChange={(e) => setPrioridade(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <option value="BAIXA">Baixa</option>
+                <option value="MEDIA">Média</option>
+                <option value="ALTA">Alta</option>
+                <option value="CRITICA">Crítica / Urgente</option>
               </select>
             </div>
           </div>
