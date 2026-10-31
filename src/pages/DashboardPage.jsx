@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { CheckCircle2, Clock, TrendingUp, Layers, RotateCw } from 'lucide-react';
+import { CheckCircle2, Clock, TrendingUp, Layers, RotateCw, AlertTriangle } from 'lucide-react';
 
 export default function DashboardPage() {
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState(null);
 
   const carregarMetricas = async () => {
     try {
       setCarregando(true);
+      setErro(null);
       const res = await api.get('/ordens-servico');
       setOrdens(res.data);
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err);
+      setErro('Não foi possível conectar à API. Verifique a conexão com o backend.');
     } finally {
       setCarregando(false);
     }
@@ -50,6 +53,22 @@ export default function DashboardPage() {
           <span>Atualizar</span>
         </button>
       </div>
+
+      {/* Alerta de Erro de Conexão */}
+      {erro && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-rose-800 text-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle size={18} className="text-rose-600 shrink-0" />
+            <span>{erro}</span>
+          </div>
+          <button
+            onClick={carregarMetricas}
+            className="text-xs font-semibold text-rose-700 underline hover:text-rose-900 cursor-pointer"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
 
       {/* Cards de Métricas Reais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

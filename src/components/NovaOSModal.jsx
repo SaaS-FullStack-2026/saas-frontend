@@ -67,11 +67,19 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
     setErro(null);
 
     try {
+      const user = (() => {
+        try {
+          return JSON.parse(localStorage.getItem('user') || '{}');
+        } catch {
+          return {};
+        }
+      })();
+
       await api.post('/ordens-servico', {
         titulo,
         descricao,
-        empresaId: 1, // ID Padrão para desenvolvimento local
-        gestorId: 1,  // ID Padrão para desenvolvimento local
+        empresaId: user.empresaId || 1,
+        gestorId: user.id || 1,
         clienteId: Number(clienteId),
         agenteId: agenteId ? Number(agenteId) : null,
       });

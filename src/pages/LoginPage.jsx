@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { Layers, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessaoExpirada = searchParams.get('expirado') === 'true';
+
   const [email, setEmail] = useState('gestor@fieldops.com');
   const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
@@ -101,6 +104,14 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
+
+        {/* Alerta de Sessão Expirada */}
+        {sessaoExpirada && !erro && (
+          <div className="mx-8 mb-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs flex items-center gap-2">
+            <AlertCircle size={15} className="shrink-0 text-amber-600" />
+            <span>Sua sessão expirou por segurança. Faça login novamente para continuar.</span>
+          </div>
+        )}
 
         {erro && (
           <div className="mx-8 mb-2 p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2">
