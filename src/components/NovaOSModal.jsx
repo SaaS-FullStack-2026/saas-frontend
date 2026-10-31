@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2, Tag, AlertTriangle, Wrench } from 'lucide-react';
+import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2, Tag, AlertTriangle, Wrench, Calendar, Clock } from 'lucide-react';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
+
+const obterAgoraLocalInput = () => {
+  const d = new Date();
+  d.setMinutes(0);
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   const [titulo, setTitulo] = useState('');
@@ -11,6 +20,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   const [equipamentoId, setEquipamentoId] = useState('');
   const [tipoServico, setTipoServico] = useState('PREVENTIVA');
   const [prioridade, setPrioridade] = useState('MEDIA');
+  const [dataAgendamento, setDataAgendamento] = useState(obterAgoraLocalInput());
+  const [duracaoEstimadaMinutos, setDuracaoEstimadaMinutos] = useState(60);
 
   const [clientes, setClientes] = useState([]);
   const [agentes, setAgentes] = useState([]);
@@ -78,6 +89,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
     setEquipamentoId('');
     setTipoServico('PREVENTIVA');
     setPrioridade('MEDIA');
+    setDataAgendamento(obterAgoraLocalInput());
+    setDuracaoEstimadaMinutos(60);
     setErro(null);
   };
 
@@ -106,6 +119,8 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
         }
       })();
 
+      const dataIso = dataAgendamento ? new Date(dataAgendamento).toISOString() : null;
+
       await api.post('/ordens-servico', {
         titulo,
         descricao,
@@ -116,6 +131,9 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
         equipamentoId: equipamentoId ? Number(equipamentoId) : null,
         tipoServico,
         prioridade,
+        dataAgendamento: dataIso,
+        duracaoEstimadaMinutos: Number(duracaoEstimadaMinutos) || 60,
+        tempoDeslocamentoMinutos: 30
       });
 
       resetFormulario();
@@ -286,6 +304,42 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
                 <option value="MEDIA">Média</option>
                 <option value="ALTA">Alta</option>
                 <option value="CRITICA">Crítica / Urgente</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Data e Horário Previsto & Duração Estimada */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Calendar size={13} className="text-slate-400" /> Agendamento (Data e Hora)
+              </label>
+              <input
+                type="datetime-local"
+                disabled={salvando}
+                value={dataAgendamento}
+                onChange={(e) => setDataAgendamento(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60 font-medium"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Clock size={13} className="text-slate-400" /> Duração Estimada
+              </label>
+              <select
+                disabled={salvando}
+                value={duracaoEstimadaMinutos}
+                onChange={(e) => setDuracaoEstimadaMinutos(Number(e.target.value))}
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+              >
+                <option value={30}>30 minutos</option>
+                <option value={45}>45 minutos</option>
+                <option value={60}>1 hora (Padrão)</option>
+                <option value={90}>1 hora e 30 min</option>
+                <option value={120}>2 horas</option>
+                <option value={180}>3 horas</option>
+                <option value={240}>4 horas</option>
               </select>
             </div>
           </div>

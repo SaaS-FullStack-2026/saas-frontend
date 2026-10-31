@@ -37,9 +37,20 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
   const [salvandoAtivo, setSalvandoAtivo] = useState(false);
   const [osLocal, setOsLocal] = useState(os);
 
+  // Estados para reagendamento e alteração de data/horário
+  const [editandoAgendamento, setEditandoAgendamento] = useState(false);
+  const [agendamentoData, setAgendamentoData] = useState('');
+  const [agendamentoAgenteId, setAgendamentoAgenteId] = useState('');
+  const [agendamentoDuracao, setAgendamentoDuracao] = useState(60);
+  const [agendamentoDeslocamento, setAgendamentoDeslocamento] = useState(30);
+  const [listaTecnicos, setListaTecnicos] = useState([]);
+  const [carregandoTecnicos, setCarregandoTecnicos] = useState(false);
+  const [salvandoAgendamento, setSalvandoAgendamento] = useState(false);
+
   useEffect(() => {
     setOsLocal(os);
     setEditandoAtivo(false);
+    setEditandoAgendamento(false);
   }, [os]);
 
   const copiarRastreio = () => {
@@ -100,6 +111,62 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
       alert('Não foi possível vincular o ativo à ordem de serviço.');
     } finally {
       setSalvandoAtivo(false);
+    }
+  };
+
+  const formatarParaInput = (dataStr) => {
+    if (!dataStr) {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`;
+    }
+    const d = new Date(dataStr);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const abrirEdicaoAgendamento = async () => {
+    setEditandoAgendamento(true);
+    setAgendamentoData(formatarParaInput(osLocal.dataAgendamento));
+    setAgendamentoAgenteId(osLocal.agente?.id || '');
+    setAgendamentoDuracao(osLocal.duracaoEstimadaMinutos || 60);
+    setAgendamentoDeslocamento(osLocal.tempoDeslocamentoMinutos || 30);
+
+    if (listaTecnicos.length === 0) {
+      try {
+        setCarregandoTecnicos(true);
+        const res = await api.get('/usuarios');
+        const agentes = (res.data || []).filter((u) => u.perfil === 'AGENTE');
+        setListaTecnicos(agentes);
+      } catch (err) {
+        console.error('Erro ao carregar técnicos:', err);
+      } finally {
+        setCarregandoTecnicos(false);
+      }
+    }
+  };
+
+  const salvarAgendamento = async () => {
+    try {
+      setSalvandoAgendamento(true);
+      const dataIso = agendamentoData ? new Date(agendamentoData).toISOString() : new Date().toISOString();
+      const res = await api.patch(`/ordens-servico/${osLocal.id}/reagendar`, {
+        agenteId: agendamentoAgenteId ? Number(agendamentoAgenteId) : null,
+        dataAgendamento: dataIso,
+        duracaoEstimadaMinutos: Number(agendamentoDuracao) || 60,
+        tempoDeslocamentoMinutos: Number(agendamentoDeslocamento) || 30
+      });
+      setOsLocal(res.data);
+      onOSAtualizada?.(res.data);
+      setEditandoAgendamento(false);
+
+      const resHist = await api.get(`/ordens-servico/${osLocal.id}/historico`);
+      setHistorico(resHist.data || []);
+    } catch (err) {
+      console.error('Erro ao reagendar OS:', err);
+      alert('Não foi possível reagendar a ordem de serviço. Verifique os dados informados.');
+    } finally {
+      setSalvandoAgendamento(false);
     }
   };
 
@@ -197,20 +264,134 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
           {/* Conteúdo com Scroll */}
           <div className="p-5 space-y-5 overflow-y-auto flex-1 text-slate-800 text-xs sm:text-sm">
             {/* Descrição & Dados de Serviço */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
               <p className="text-xs text-slate-600 leading-relaxed font-normal">
                 {osLocal.descricao || 'Nenhuma descrição detalhada informada.'}
               </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200 text-2xs text-slate-500">
-                <span className="flex items-center gap-1">
-                  <Tag size={13} className="text-slate-400" />
-                  Tipo: <strong className="text-slate-700 font-semibold">{osLocal.tipoServico || 'PREVENTIVA'}</strong>
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar size={13} className="text-slate-400" />
-                  Agendado: <strong className="text-slate-700 font-semibold">{formatarData(osLocal.dataAgendamento)}</strong>
-                </span>
+              
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 text-2xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex items-center gap-1">
+                    <Tag size={13} className="text-slate-400" />
+                    Tipo: <strong className="text-slate-700 font-semibold">{osLocal.tipoServico || 'PREVENTIVA'}</strong>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={13} className="text-slate-400" />
+                    Agendado: <strong className="text-slate-700 font-semibold">{formatarData(osLocal.dataAgendamento)}</strong>
+                  </span>
+                  {osLocal.duracaoEstimadaMinutos && (
+                    <span className="flex items-center gap-1">
+                      <Clock size={13} className="text-slate-400" />
+                      Duração: <strong className="text-slate-700 font-semibold">{osLocal.duracaoEstimadaMinutos} min</strong>
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => (editandoAgendamento ? setEditandoAgendamento(false) : abrirEdicaoAgendamento())}
+                  className="inline-flex items-center gap-1 text-2xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Calendar size={12} />
+                  <span>{editandoAgendamento ? 'Cancelar Reagendamento' : 'Reagendar / Mudar Data'}</span>
+                </button>
               </div>
+
+              {/* Painel Expansível de Reagendamento */}
+              {editandoAgendamento && (
+                <div className="p-3.5 bg-white border border-blue-200 rounded-xl space-y-3 shadow-xs animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Calendar size={14} className="text-blue-600" /> Reagendamento Inteligente
+                    </h4>
+                    <span className="text-[10px] text-slate-400">Recalcula rotas e buffers automaticamente</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Nova Data e Horário
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={agendamentoData}
+                        onChange={(e) => setAgendamentoData(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Técnico Atribuído
+                      </label>
+                      <select
+                        value={agendamentoAgenteId}
+                        onChange={(e) => setAgendamentoAgenteId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+                      >
+                        <option value="">{carregandoTecnicos ? 'Carregando...' : 'Nenhum / Fila de Espera'}</option>
+                        {listaTecnicos.map((t) => (
+                          <option key={t.id} value={t.id}>{t.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Duração Estimada
+                      </label>
+                      <select
+                        value={agendamentoDuracao}
+                        onChange={(e) => setAgendamentoDuracao(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+                      >
+                        <option value={30}>30 minutos</option>
+                        <option value={45}>45 minutos</option>
+                        <option value={60}>1 hora (Padrão)</option>
+                        <option value={90}>1 hora e 30 min</option>
+                        <option value={120}>2 horas</option>
+                        <option value={180}>3 horas</option>
+                        <option value={240}>4 horas</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Buffer Deslocamento (Min)
+                      </label>
+                      <select
+                        value={agendamentoDeslocamento}
+                        onChange={(e) => setAgendamentoDeslocamento(Number(e.target.value))}
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+                      >
+                        <option value={15}>15 minutos</option>
+                        <option value={30}>30 minutos (Padrão)</option>
+                        <option value={45}>45 minutos</option>
+                        <option value={60}>60 minutos</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setEditandoAgendamento(false)}
+                      className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={salvandoAgendamento}
+                      onClick={salvarAgendamento}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs cursor-pointer transition-colors disabled:opacity-60"
+                    >
+                      {salvandoAgendamento ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                      <span>Salvar Reagendamento</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Grid de Pessoas / Atores */}
