@@ -6,9 +6,11 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import OrdensPage from './pages/OrdensPage';
 import MapaPage from './pages/MapaPage';
+import EquipamentosPage from './pages/EquipamentosPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ClientesPage from './pages/ClientesPage';
 import MobileOSPage from './pages/MobileOSPage';
+import RastreioPublicoPage from './pages/RastreioPublicoPage';
 import StatusCheck from './pages/StatusCheck';
 
 function App() {
@@ -17,6 +19,9 @@ function App() {
       <Routes>
         {/* Rota Pública de Autenticação */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Rota Pública de Rastreio do Chamado para o Cliente Final (Estilo Uber) */}
+        <Route path="/rastreio/:codigo" element={<RastreioPublicoPage />} />
 
         {/* Visão Mobile Protegida para Técnicos de Campo */}
         <Route element={<ProtectedRoute />}>
@@ -32,6 +37,7 @@ function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="ordens" element={<OrdensPage />} />
             <Route path="mapa" element={<MapaPage />} />
+            <Route path="equipamentos" element={<EquipamentosPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="status" element={<StatusCheck />} />

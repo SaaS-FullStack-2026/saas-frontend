@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2, Tag, AlertTriangle } from 'lucide-react';
+import { X, ClipboardPlus, Building2, User, AlertCircle, Loader2, Tag, AlertTriangle, Wrench } from 'lucide-react';
+import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 
 export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [clienteId, setClienteId] = useState('');
   const [agenteId, setAgenteId] = useState('');
+  const [equipamentoId, setEquipamentoId] = useState('');
   const [tipoServico, setTipoServico] = useState('PREVENTIVA');
   const [prioridade, setPrioridade] = useState('MEDIA');
 
   const [clientes, setClientes] = useState([]);
   const [agentes, setAgentes] = useState([]);
+  const [equipamentos, setEquipamentos] = useState([]);
+  const [carregandoEquipamentos, setCarregandoEquipamentos] = useState(false);
   
   const [carregandoDados, setCarregandoDados] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -42,6 +46,28 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
     }
   }, [isOpen]);
 
+  // Carregar equipamentos do cliente quando o cliente for selecionado
+  useEffect(() => {
+    if (clienteId) {
+      setCarregandoEquipamentos(true);
+      setEquipamentoId('');
+      api.get('/equipamentos', { params: { clienteId } })
+        .then((res) => {
+          setEquipamentos(res.data || []);
+        })
+        .catch((err) => {
+          console.error('Erro ao buscar equipamentos do cliente:', err);
+          setEquipamentos([]);
+        })
+        .finally(() => {
+          setCarregandoEquipamentos(false);
+        });
+    } else {
+      setEquipamentos([]);
+      setEquipamentoId('');
+    }
+  }, [clienteId]);
+
   if (!isOpen) return null;
 
   const resetFormulario = () => {
@@ -49,6 +75,7 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
     setDescricao('');
     setClienteId('');
     setAgenteId('');
+    setEquipamentoId('');
     setTipoServico('PREVENTIVA');
     setPrioridade('MEDIA');
     setErro(null);
@@ -86,6 +113,7 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
         gestorId: user.id || 1,
         clienteId: Number(clienteId),
         agenteId: agenteId ? Number(agenteId) : null,
+        equipamentoId: equipamentoId ? Number(equipamentoId) : null,
         tipoServico,
         prioridade,
       });
@@ -185,6 +213,42 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Select Equipamento / Ativo Vinculado */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <Wrench size={13} className="text-slate-400" /> Equipamento / Ativo do Cliente (Opcional)
+              </span>
+              {clienteId && equipamentos.length === 0 && !carregandoEquipamentos && (
+                <span className="text-[10px] text-amber-600 font-normal">Nenhum ativo cadastrado para este cliente</span>
+              )}
+            </label>
+            <select
+              disabled={!clienteId || carregandoEquipamentos || salvando}
+              value={equipamentoId}
+              onChange={(e) => setEquipamentoId(e.target.value)}
+              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+            >
+              <option value="">
+                {!clienteId
+                  ? 'Selecione primeiro o cliente acima...'
+                  : carregandoEquipamentos
+                  ? 'Carregando equipamentos do cliente...'
+                  : equipamentos.length === 0
+                  ? 'Nenhum equipamento cadastrado (atendimento geral)'
+                  : 'Selecione o equipamento a consertar/inspecionar (Opcional)...'}
+              </option>
+              {equipamentos.map((eq) => {
+                const cat = getCategoriaInfo(eq.categoria);
+                return (
+                  <option key={eq.id} value={eq.id}>
+                    {cat.emoji} {eq.nome} {eq.numeroSerie ? `(S/N: ${eq.numeroSerie})` : ''} - {eq.localizacao || cat.label}
+                  </option>
+                );
+              })}
+            </select>
           </div>
 
           {/* Grid de Tipo de Serviço e Prioridade */}

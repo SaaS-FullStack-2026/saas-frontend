@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import NovaOSModal from '../components/NovaOSModal';
 import DetalhesOSModal from '../components/DetalhesOSModal';
+import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 import { 
   Plus, 
   Search, 
@@ -16,7 +17,10 @@ import {
   PenTool, 
   Eye,
   CheckCircle2,
-  Calendar
+  Calendar,
+  Share2,
+  Check,
+  Wrench
 } from 'lucide-react';
 
 const KANBAN_COLUNAS = [
@@ -35,6 +39,16 @@ export default function OrdensPage() {
   const [osSelecionada, setOsSelecionada] = useState(null);
   const [busca, setBusca] = useState('');
   const [modoVisualizacao, setModoVisualizacao] = useState('kanban'); // 'tabela' ou 'kanban'
+  const [copiadoId, setCopiadoId] = useState(null);
+
+  const copiarLinkRastreio = (os, e) => {
+    if (e) e.stopPropagation();
+    const cod = os.codigoRastreio || `TRK-OS${os.id}`;
+    const url = `${window.location.origin}/rastreio/${cod}`;
+    navigator.clipboard.writeText(url);
+    setCopiadoId(os.id);
+    setTimeout(() => setCopiadoId(null), 2500);
+  };
 
   const carregarOrdens = async () => {
     try {
@@ -247,6 +261,14 @@ export default function OrdensPage() {
                           {o.titulo}
                         </h4>
 
+                        {/* Equipamento Vinculado */}
+                        {o.equipamento && (
+                          <div className="bg-slate-50 border border-slate-200/90 rounded-md px-2 py-1 flex items-center gap-1.5 text-[11px] text-slate-700">
+                            <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
+                            <span className="font-medium truncate">{o.equipamento.nome}</span>
+                          </div>
+                        )}
+
                         {/* Metadados: Cliente e Técnico */}
                         <div className="space-y-1 text-[11px] text-slate-600">
                           <div className="flex items-center gap-1.5 truncate">
@@ -259,12 +281,19 @@ export default function OrdensPage() {
                           </div>
                         </div>
 
-                        {/* Linha Inferior: Tipo de Serviço + Evidências */}
+                        {/* Linha Inferior: Tipo de Serviço + Rastreio + Evidências */}
                         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
                           <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
                             {o.tipoServico || 'PREVENTIVA'}
                           </span>
-                          <div className="flex items-center gap-1.5 text-slate-500">
+                          <div className="flex items-center gap-2 text-slate-500">
+                            <button
+                              onClick={(e) => copiarLinkRastreio(o, e)}
+                              className="text-slate-400 hover:text-blue-600 transition-colors p-0.5 cursor-pointer"
+                              title="Copiar link de rastreio para o cliente"
+                            >
+                              {copiadoId === o.id ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
+                            </button>
                             {o.assinaturaCliente && (
                               <span title="Assinatura Coletada" className="text-emerald-600">
                                 <PenTool size={13} />
@@ -335,7 +364,15 @@ export default function OrdensPage() {
                     >
                       <td className="px-5 py-4 font-mono font-bold text-blue-600">#{o.id}</td>
                       <td className="px-5 py-4 font-medium text-slate-900">{o.cliente?.nome || 'N/A'}</td>
-                      <td className="px-5 py-4 text-slate-700 max-w-xs truncate">{o.titulo}</td>
+                      <td className="px-5 py-4">
+                        <div className="text-slate-700 max-w-xs truncate font-medium">{o.titulo}</div>
+                        {o.equipamento && (
+                          <div className="inline-flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
+                            <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
+                            <span className="truncate max-w-[140px]">{o.equipamento.nome}</span>
+                          </div>
+                        )}
+                      </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
@@ -354,16 +391,26 @@ export default function OrdensPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOsSelecionada(o);
-                          }}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
-                        >
-                          <Eye size={13} />
-                          <span>Ver</span>
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={(e) => copiarLinkRastreio(o, e)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                            title="Copiar link de rastreio para o cliente"
+                          >
+                            {copiadoId === o.id ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
+                            <span className="hidden sm:inline">{copiadoId === o.id ? 'Copiado!' : 'Rastreio'}</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOsSelecionada(o);
+                            }}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                          >
+                            <Eye size={13} />
+                            <span>Ver</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
