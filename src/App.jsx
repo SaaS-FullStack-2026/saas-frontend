@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import OrdensPage from './pages/OrdensPage';
 import MapaPage from './pages/MapaPage';
+import LinhaDoTempoPage from './pages/LinhaDoTempoPage';
 import EquipamentosPage from './pages/EquipamentosPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ClientesPage from './pages/ClientesPage';
@@ -37,6 +38,7 @@ function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="ordens" element={<OrdensPage />} />
             <Route path="mapa" element={<MapaPage />} />
+            <Route path="linha-do-tempo" element={<LinhaDoTempoPage />} />
             <Route path="equipamentos" element={<EquipamentosPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="clientes" element={<ClientesPage />} />
