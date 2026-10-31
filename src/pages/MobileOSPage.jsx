@@ -8,13 +8,18 @@ import {
   ChevronRight,
   Clock,
   Navigation,
-  Wrench
+  Wrench,
+  FileCheck,
+  ExternalLink
 } from 'lucide-react';
+import ConcluirOSModal from '../components/mobile/ConcluirOSModal';
 
 export default function MobileOSPage() {
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [processandoId, setProcessandoId] = useState(null);
+  const [osParaConcluir, setOsParaConcluir] = useState(null);
+  const [salvandoConclusao, setSalvandoConclusao] = useState(false);
 
   const carregarOrdens = async () => {
     try {
@@ -59,7 +64,16 @@ export default function MobileOSPage() {
     }
   };
 
-  const avancarStatus = async (id, statusAtual) => {
+  const handleAcaoClick = (os) => {
+    if (os.status === 'EM_ATENDIMENTO') {
+      // Abre o modal de checklist técnico e assinatura digital
+      setOsParaConcluir(os);
+    } else {
+      avancarStatusSimples(os.id, os.status);
+    }
+  };
+
+  const avancarStatusSimples = async (id, statusAtual) => {
     const novoStatus = proximoStatus(statusAtual);
     if (!novoStatus) return;
 
@@ -74,12 +88,31 @@ export default function MobileOSPage() {
     }
   };
 
+  const handleConcluirComAssinatura = async (dadosConclusao) => {
+    if (!osParaConcluir) return;
+
+    try {
+      setSalvandoConclusao(true);
+      await api.patch(`/ordens-servico/${osParaConcluir.id}/status`, {
+        novoStatus: 'CONCLUIDA',
+        ...dadosConclusao,
+      });
+
+      setOsParaConcluir(null);
+      await carregarOrdens();
+    } catch (err) {
+      alert('Erro ao concluir O.S.: ' + (err.response?.data?.message || err.response?.data || err.message));
+    } finally {
+      setSalvandoConclusao(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Ordens em Aberto</h2>
-          <p className="text-xs text-slate-500">Toque para atualizar o ciclo da máquina de estados</p>
+          <h2 className="text-lg font-bold text-slate-900">Ordens de Serviço</h2>
+          <p className="text-xs text-slate-500">Fluxo operacional do técnico em campo</p>
         </div>
         <button
           onClick={carregarOrdens}
@@ -105,6 +138,7 @@ export default function MobileOSPage() {
             const pStatus = proximoStatus(os.status);
             const acao = getAcaoInfo(os.status);
             const Icon = acao.icon;
+            const clienteNome = os.cliente?.nome || 'Cliente';
 
             return (
               <div
@@ -115,9 +149,25 @@ export default function MobileOSPage() {
                   <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                     #{os.id}
                   </span>
-                  <span className="text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider bg-slate-100 text-slate-700">
-                    {os.status.replace('_', ' ')}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {/* Botão de Rota GPS */}
+                    {os.status !== 'CONCLUIDA' && (
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(clienteNome)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-2xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200 transition-colors cursor-pointer"
+                        title="Abrir rota no Google Maps"
+                      >
+                        <Navigation size={11} />
+                        <span>GPS</span>
+                        <ExternalLink size={9} />
+                      </a>
+                    )}
+                    <span className="text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider bg-slate-100 text-slate-700">
+                      {os.status ? os.status.replace('_', ' ') : 'INDEFINIDO'}
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -138,11 +188,22 @@ export default function MobileOSPage() {
                       <span>Técnico: {os.agente.nome}</span>
                     </div>
                   )}
+                  {os.status === 'CONCLUIDA' && (os.laudoTecnico || os.assinaturaCliente) && (
+                    <div className="mt-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-2xs text-emerald-800 space-y-1">
+                      <div className="flex items-center gap-1 font-semibold text-emerald-700">
+                        <FileCheck size={13} />
+                        <span>Laudo e Assinatura Digital Concluídos</span>
+                      </div>
+                      {os.laudoTecnico && (
+                        <p className="line-clamp-2 italic text-emerald-900">"{os.laudoTecnico}"</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Botão de Avanço de Status */}
+                {/* Botão de Ação Guiada */}
                 <button
-                  onClick={() => avancarStatus(os.id, os.status)}
+                  onClick={() => handleAcaoClick(os)}
                   disabled={!pStatus || processandoId === os.id}
                   className={`w-full py-2.5 px-4 rounded-lg text-xs font-semibold text-white shadow-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed ${acao.bg} ${
                     processandoId === os.id ? 'opacity-60' : ''
@@ -157,6 +218,15 @@ export default function MobileOSPage() {
           })}
         </div>
       )}
+
+      {/* Modal de Conclusão com Checklist e Assinatura */}
+      <ConcluirOSModal
+        os={osParaConcluir}
+        isOpen={Boolean(osParaConcluir)}
+        onClose={() => setOsParaConcluir(null)}
+        onConcluir={handleConcluirComAssinatura}
+        salvando={salvandoConclusao}
+      />
     </div>
   );
 }
