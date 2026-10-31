@@ -22,7 +22,12 @@ import {
   Eye
 } from 'lucide-react';
 
-const HORAS_TIMELINE = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+const HORA_INICIAL_TIMELINE = 6;
+const HORA_FINAL_TIMELINE = 23;
+const HORAS_TIMELINE = Array.from(
+  { length: HORA_FINAL_TIMELINE - HORA_INICIAL_TIMELINE + 1 },
+  (_, i) => i + HORA_INICIAL_TIMELINE
+); // 06:00 até 23:00
 const LARGURA_HORA_PX = 120; // 120px por hora para clareza visual
 
 function obterInfoAtivo(os) {
@@ -178,7 +183,7 @@ export default function LinhaDoTempoPage() {
   const isHoje = dataSelecionada === new Date().toISOString().split('T')[0];
   const agora = new Date();
   const horaAgoraFloat = agora.getHours() + agora.getMinutes() / 60;
-  const linhaAgoraLeftPx = (horaAgoraFloat - 8) * LARGURA_HORA_PX;
+  const linhaAgoraLeftPx = (horaAgoraFloat - HORA_INICIAL_TIMELINE) * LARGURA_HORA_PX;
 
   return (
     <div className="space-y-4">
@@ -379,7 +384,7 @@ export default function LinhaDoTempoPage() {
             </div>
 
             {/* Linha Vermelha do "Agora" */}
-            {isHoje && horaAgoraFloat >= 8 && horaAgoraFloat <= 19 && (
+            {isHoje && horaAgoraFloat >= HORA_INICIAL_TIMELINE && horaAgoraFloat <= (HORA_FINAL_TIMELINE + 1) && (
               <div
                 style={{ left: `${260 + linhaAgoraLeftPx}px` }}
                 className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-30 pointer-events-none"
@@ -461,7 +466,7 @@ export default function LinhaDoTempoPage() {
                         const deslocamentoMinutos = o.tempoDeslocamentoMinutos || 30;
 
                         // Cálculos posicionais proporcionais em pixels
-                        const offsetLeftPx = (horaInicioFloat - 8) * LARGURA_HORA_PX;
+                        const offsetLeftPx = (horaInicioFloat - HORA_INICIAL_TIMELINE) * LARGURA_HORA_PX;
                         const widthPx = Math.max((duracaoMinutos / 60) * LARGURA_HORA_PX, 90);
 
                         const deslocamentoWidthPx = (deslocamentoMinutos / 60) * LARGURA_HORA_PX;
