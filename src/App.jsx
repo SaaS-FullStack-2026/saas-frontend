@@ -5,6 +5,7 @@ import MobileLayout from './components/layout/MobileLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import OrdensPage from './pages/OrdensPage';
+import MapaPage from './pages/MapaPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ClientesPage from './pages/ClientesPage';
 import MobileOSPage from './pages/MobileOSPage';
@@ -30,6 +31,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="ordens" element={<OrdensPage />} />
+            <Route path="mapa" element={<MapaPage />} />
             <Route path="usuarios" element={<UsuariosPage />} />
             <Route path="clientes" element={<ClientesPage />} />
             <Route path="status" element={<StatusCheck />} />
