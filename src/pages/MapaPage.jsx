@@ -65,11 +65,31 @@ const STATUS_CONFIG = {
 };
 
 // Gerador de ícones Leaflet estilizados via HTML/CSS com ícone do equipamento
-function criarIconeStatus(status, codigo, equipamento) {
+function criarIconeStatus(status, codigo, os) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ABERTA;
   const isPulsando = status === 'EM_DESLOCAMENTO' || status === 'EM_ATENDIMENTO';
-  const cat = equipamento ? getCategoriaInfo(equipamento.categoria) : null;
-  const emoji = cat ? cat.emoji : '🔧';
+  
+  let emoji = '🔧';
+  let label = 'Ativo de Campo';
+
+  if (os?.equipamento) {
+    const cat = getCategoriaInfo(os.equipamento.categoria);
+    emoji = cat.emoji;
+    label = cat.label;
+  } else {
+    const t = ((os?.titulo || '') + ' ' + (os?.descricao || '')).toLowerCase();
+    if (t.includes('ar') || t.includes('split') || t.includes('clima')) {
+      emoji = '❄️'; label = 'Climatização';
+    } else if (t.includes('roteador') || t.includes('rede') || t.includes('ti') || t.includes('fibra')) {
+      emoji = '📶'; label = 'TI & Redes';
+    } else if (t.includes('fria') || t.includes('geladeira') || t.includes('congelad')) {
+      emoji = '🧊'; label = 'Refrigeração';
+    } else if (t.includes('dedetiz') || t.includes('praga') || t.includes('isca')) {
+      emoji = '🛡️'; label = 'Dedetização';
+    } else if (t.includes('elevador') || t.includes('motor')) {
+      emoji = '⚙️'; label = 'Elevador / Mecânica';
+    }
+  }
 
   return L.divIcon({
     className: 'custom-leaflet-marker',
@@ -79,7 +99,7 @@ function criarIconeStatus(status, codigo, equipamento) {
         <div style="background-color: ${cfg.cor}; color: white; width: 30px; height: 30px; border-radius: 9999px; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; font-family: monospace;">
           #${codigo}
         </div>
-        <div title="${cat ? cat.label : 'Ativo Geral'}" style="position: absolute; top: 0px; right: 0px; background: white; border-radius: 9999px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid #cbd5e1;">
+        <div title="${label}" style="position: absolute; top: 0px; right: 0px; background: white; border-radius: 9999px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid #cbd5e1;">
           ${emoji}
         </div>
       </div>
@@ -273,7 +293,7 @@ export default function MapaPage() {
               <Marker
                 key={o.id}
                 position={o.posicao}
-                icon={criarIconeStatus(statusKey, o.id, o.equipamento)}
+                icon={criarIconeStatus(statusKey, o.id, o)}
               >
                 <Popup>
                   <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
@@ -363,6 +383,7 @@ export default function MapaPage() {
         os={osSelecionada}
         isOpen={Boolean(osSelecionada)}
         onClose={() => setOsSelecionada(null)}
+        onOSAtualizada={carregarOrdens}
       />
     </div>
   );
