@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 import { 
   X, 
   Calendar, 
@@ -13,12 +14,24 @@ import {
   AlertTriangle,
   Tag,
   Wrench,
-  Loader2
+  Loader2,
+  Share2,
+  Check
 } from 'lucide-react';
 
 export default function DetalhesOSModal({ os, isOpen, onClose }) {
   const [historico, setHistorico] = useState([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
+  const copiarRastreio = () => {
+    if (!os) return;
+    const cod = os.codigoRastreio || `TRK-OS${os.id}`;
+    const url = `${window.location.origin}/rastreio/${cod}`;
+    navigator.clipboard.writeText(url);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2500);
+  };
 
   useEffect(() => {
     if (isOpen && os?.id) {
@@ -95,13 +108,24 @@ export default function DetalhesOSModal({ os, isOpen, onClose }) {
             </div>
             <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">{os.titulo}</h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={copiarRastreio}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              title="Copiar link de rastreio para enviar ao cliente"
+            >
+              {copiado ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
+              <span>{copiado ? 'Link Copiado!' : 'Rastreio Cliente'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Conteúdo com Scroll */}
@@ -151,6 +175,42 @@ export default function DetalhesOSModal({ os, isOpen, onClose }) {
               <p className="text-2xs text-slate-500">Supervisão</p>
             </div>
           </div>
+
+          {/* Equipamento / Ativo Vinculado */}
+          {os.equipamento && (
+            <div className="p-4 bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl p-2 bg-white rounded-lg border border-slate-200 shadow-xs">
+                  {getCategoriaInfo(os.equipamento.categoria).emoji}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 text-xs sm:text-sm">{os.equipamento.nome}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getCategoriaInfo(os.equipamento.categoria).cor}`}>
+                      {getCategoriaInfo(os.equipamento.categoria).label.split('/')[0]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {os.equipamento.fabricante || 'Marca N/D'} {os.equipamento.modelo ? `• ${os.equipamento.modelo}` : ''}
+                    {os.equipamento.numeroSerie ? ` • S/N: ${os.equipamento.numeroSerie}` : ''}
+                  </p>
+                  {os.equipamento.localizacao && (
+                    <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                      📍 Local: {os.equipamento.localizacao}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {os.equipamento.codigoQr && (
+                <div className="text-right hidden sm:block">
+                  <span className="text-[10px] text-slate-400 font-semibold block uppercase">Código QR</span>
+                  <span className="font-mono text-xs font-bold text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 block">
+                    {os.equipamento.codigoQr}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Timestamps Operacionais (Check-in e Check-out) */}
           <div className="p-4 bg-blue-50/60 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

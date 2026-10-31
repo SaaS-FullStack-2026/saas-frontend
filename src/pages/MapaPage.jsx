@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import DetalhesOSModal from '../components/DetalhesOSModal';
+import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 import { 
   MapPin, 
   RotateCw, 
@@ -16,7 +17,9 @@ import {
   Eye, 
   Filter,
   Navigation,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Check
 } from 'lucide-react';
 
 // Coordenadas centrais padrão (São Paulo / Região Metropolitana)
@@ -61,24 +64,29 @@ const STATUS_CONFIG = {
   }
 };
 
-// Gerador de ícones Leaflet estilizados via HTML/CSS (dispensa arquivos PNG do Vite)
-function criarIconeStatus(status, codigo) {
+// Gerador de ícones Leaflet estilizados via HTML/CSS com ícone do equipamento
+function criarIconeStatus(status, codigo, equipamento) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ABERTA;
   const isPulsando = status === 'EM_DESLOCAMENTO' || status === 'EM_ATENDIMENTO';
+  const cat = equipamento ? getCategoriaInfo(equipamento.categoria) : null;
+  const emoji = cat ? cat.emoji : '🔧';
 
   return L.divIcon({
     className: 'custom-leaflet-marker',
     html: `
-      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
-        ${isPulsando ? `<span style="position: absolute; width: 36px; height: 36px; border-radius: 9999px; background-color: ${cfg.cor}; opacity: 0.35; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>` : ''}
-        <div style="background-color: ${cfg.cor}; color: white; width: 28px; height: 28px; border-radius: 9999px; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; font-family: monospace;">
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;">
+        ${isPulsando ? `<span style="position: absolute; width: 44px; height: 44px; border-radius: 9999px; background-color: ${cfg.cor}; opacity: 0.35; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>` : ''}
+        <div style="background-color: ${cfg.cor}; color: white; width: 30px; height: 30px; border-radius: 9999px; border: 2.5px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; font-family: monospace;">
           #${codigo}
+        </div>
+        <div title="${cat ? cat.label : 'Ativo Geral'}" style="position: absolute; top: 0px; right: 0px; background: white; border-radius: 9999px; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid #cbd5e1;">
+          ${emoji}
         </div>
       </div>
     `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -18]
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -22]
   });
 }
 
@@ -100,6 +108,7 @@ export default function MapaPage() {
   const [filtroStatus, setFiltroStatus] = useState('TODOS');
   const [osSelecionada, setOsSelecionada] = useState(null);
   const [mapCenter, setMapCenter] = useState(CENTRO_PADRAO);
+  const [copiadoId, setCopiadoId] = useState(null);
 
   const carregarOrdens = async () => {
     try {
@@ -150,6 +159,14 @@ export default function MapaPage() {
         }
       );
     }
+  };
+
+  const copiarLinkRastreio = (os) => {
+    const cod = os.codigoRastreio || `TRK-OS${os.id}`;
+    const url = `${window.location.origin}/rastreio/${cod}`;
+    navigator.clipboard.writeText(url);
+    setCopiadoId(os.id);
+    setTimeout(() => setCopiadoId(null), 2500);
   };
 
   return (
@@ -256,10 +273,10 @@ export default function MapaPage() {
               <Marker
                 key={o.id}
                 position={o.posicao}
-                icon={criarIconeStatus(statusKey, o.id)}
+                icon={criarIconeStatus(statusKey, o.id, o.equipamento)}
               >
                 <Popup>
-                  <div className="p-1 space-y-2 min-w-[210px] text-slate-800">
+                  <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
                     {/* Header do Popup */}
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                       <span className="font-mono text-xs font-bold text-blue-600">OS #{o.id}</span>
@@ -272,6 +289,21 @@ export default function MapaPage() {
                     <p className="font-semibold text-xs text-slate-900 leading-tight">
                       {o.titulo}
                     </p>
+
+                    {/* Equipamento Vinculado com Ícone */}
+                    {o.equipamento && (
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-xs">
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                          <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
+                          <span className="truncate">{o.equipamento.nome}</span>
+                        </div>
+                        {o.equipamento.localizacao && (
+                          <p className="text-[10px] text-slate-500 mt-0.5 truncate">
+                            Local: {o.equipamento.localizacao}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Metadados */}
                     <div className="space-y-1 text-[11px] text-slate-600">
@@ -299,14 +331,25 @@ export default function MapaPage() {
                       )}
                     </div>
 
-                    {/* Botão para abrir o Modal de Detalhes da OS */}
-                    <button
-                      onClick={() => setOsSelecionada(o)}
-                      className="w-full mt-2 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
-                    >
-                      <Eye size={13} />
-                      <span>Ver Laudo & Detalhes</span>
-                    </button>
+                    {/* Ações: Rastreio do Cliente + Detalhes */}
+                    <div className="pt-2 space-y-1.5">
+                      <button
+                        onClick={() => copiarLinkRastreio(o)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
+                        title="Copiar Link para enviar ao Cliente via WhatsApp"
+                      >
+                        {copiadoId === o.id ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
+                        <span>{copiadoId === o.id ? 'Link Copiado!' : 'Copiar Rastreio Cliente'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => setOsSelecionada(o)}
+                        className="w-full inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
+                      >
+                        <Eye size={13} />
+                        <span>Ver Laudo & Detalhes</span>
+                      </button>
+                    </div>
                   </div>
                 </Popup>
               </Marker>
