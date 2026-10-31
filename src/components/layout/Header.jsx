@@ -4,6 +4,23 @@ import { Bell, UserCircle, Building, LogOut, Menu } from 'lucide-react';
 export default function Header({ onOpenSidebar }) {
   const navigate = useNavigate();
 
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return {};
+    }
+  })();
+
+  const getPerfilLabel = (perfil) => {
+    switch (perfil) {
+      case 'GESTOR': return 'Gestor Operacional';
+      case 'ADMIN': return 'Administrador';
+      case 'AGENTE': return 'Técnico de Campo';
+      default: return 'Usuário do Sistema';
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -27,7 +44,7 @@ export default function Header({ onOpenSidebar }) {
         <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-100 text-slate-700 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-medium border border-slate-200">
           <Building size={14} className="text-slate-500 shrink-0" />
           <span className="truncate max-w-[130px] sm:max-w-xs">
-            <strong className="font-semibold text-slate-900">TechOps</strong> Matriz
+            <strong className="font-semibold text-slate-900">{user.empresaNome || 'TechOps'}</strong> Matriz
           </span>
         </div>
       </div>
@@ -47,8 +64,12 @@ export default function Header({ onOpenSidebar }) {
         <div className="flex items-center gap-2 sm:gap-3">
           <UserCircle size={28} className="text-slate-400 sm:w-8 sm:h-8" />
           <div className="hidden lg:block text-left">
-            <span className="block text-sm font-semibold text-slate-800 leading-tight">Carlos Silva</span>
-            <span className="block text-xs text-slate-500 leading-tight">Gestor Operacional</span>
+            <span className="block text-sm font-semibold text-slate-800 leading-tight">
+              {user.nome || 'Carlos Silva'}
+            </span>
+            <span className="block text-xs text-slate-500 leading-tight">
+              {getPerfilLabel(user.perfil)}
+            </span>
           </div>
         </div>
 

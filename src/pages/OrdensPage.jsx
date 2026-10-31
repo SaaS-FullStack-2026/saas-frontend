@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import NovaOSModal from '../components/NovaOSModal';
-import { Plus, Search, Filter, RotateCw, AlertCircle } from 'lucide-react';
+import { Plus, Search, Filter, RotateCw, AlertCircle, FileText } from 'lucide-react';
 
 export default function OrdensPage() {
   const [ordens, setOrdens] = useState([]);
@@ -14,12 +14,14 @@ export default function OrdensPage() {
     try {
       setCarregando(true);
       setErro(null);
-      const res = await api.get('/ordens-servico');
+      // Timeout defensivo de 5 segundos para evitar travamento da tela
+      const res = await api.get('/ordens-servico', { timeout: 5000 });
       setOrdens(res.data);
     } catch (err) {
       console.error('Erro ao buscar ordens:', err);
-      setErro('Não foi possível carregar as ordens de serviço. Verifique se o backend está rodando.');
+      setErro('Não foi possível conectar com o servidor. Verifique se o back-end em Spring Boot está em execução.');
     } finally {
+      // O bloco finally garante a liberação do estado de carregamento
       setCarregando(false);
     }
   };
@@ -39,22 +41,23 @@ export default function OrdensPage() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'ABERTA':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200/80';
       case 'ATRIBUIDA':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200/80';
       case 'EM_DESLOCAMENTO':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
       case 'EM_ATENDIMENTO':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'bg-purple-50 text-purple-700 border-purple-200/80';
       case 'CONCLUIDA':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
       default:
-        return 'bg-slate-50 text-slate-700 border-slate-200';
+        return 'bg-slate-50 text-slate-700 border-slate-200/80';
     }
   };
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Ordens de Serviço</h1>
@@ -64,14 +67,16 @@ export default function OrdensPage() {
           <button
             onClick={carregarOrdens}
             disabled={carregando}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all ${
+              carregando ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer active:scale-95'
+            }`}
           >
-            <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
-            <span>Atualizar</span>
+            <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
+            <span>{carregando ? 'Atualizando...' : 'Atualizar'}</span>
           </button>
           <button
             onClick={() => setModalAberto(true)}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer active:scale-95"
           >
             <Plus size={16} />
             <span>Nova Ordem</span>
@@ -79,38 +84,63 @@ export default function OrdensPage() {
         </div>
       </div>
 
+      {/* Alerta de Erro */}
       {erro && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center gap-3">
-          <AlertCircle size={18} className="shrink-0" />
-          <span>{erro}</span>
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle size={18} className="shrink-0 text-rose-600" />
+            <span>{erro}</span>
+          </div>
+          <button
+            onClick={carregarOrdens}
+            className="text-xs font-semibold text-rose-700 hover:text-rose-800 underline shrink-0 cursor-pointer"
+          >
+            Tentar novamente
+          </button>
         </div>
       )}
 
       {/* Tabela de Ordens */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        {/* Barra de Filtros e Pesquisa */}
         <div className="p-3 sm:p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg w-full sm:max-w-sm">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg w-full sm:max-w-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
             <Search size={16} className="text-slate-400 shrink-0" />
-            <input 
-              type="text" 
-              placeholder="Buscar por código, cliente ou serviço..." 
+            <input
+              type="text"
+              placeholder="Buscar por código, cliente ou serviço..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="bg-transparent border-none text-xs sm:text-sm focus:outline-none w-full text-slate-700"
+              className="bg-transparent border-none text-xs sm:text-sm focus:outline-none w-full text-slate-700 placeholder:text-slate-400"
             />
           </div>
-          <button className="self-end sm:self-auto flex items-center gap-1.5 text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-medium border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+          <button className="self-end sm:self-auto flex items-center gap-1.5 text-slate-600 hover:text-slate-900 text-xs sm:text-sm font-medium border border-slate-200 px-3.5 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
             <Filter size={15} /> <span>Filtros</span>
           </button>
         </div>
 
+        {/* Conteúdo da Tabela */}
         {carregando ? (
-          <div className="text-center py-12 text-sm text-slate-500">
-            Carregando ordens de serviço do banco de dados...
+          <div className="p-6 space-y-4 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between gap-4 py-2 border-b border-slate-100 last:border-none">
+                <div className="h-4 bg-slate-200 rounded w-16" />
+                <div className="h-4 bg-slate-200 rounded w-28" />
+                <div className="h-4 bg-slate-200 rounded w-48 hidden sm:block" />
+                <div className="h-4 bg-slate-200 rounded w-24" />
+                <div className="h-6 bg-slate-200 rounded-full w-20" />
+              </div>
+            ))}
           </div>
         ) : ordensFiltradas.length === 0 ? (
-          <div className="text-center py-12 text-sm text-slate-500">
-            Nenhuma ordem de serviço encontrada.
+          <div className="text-center py-12 px-4 space-y-3">
+            <div className="inline-flex p-3 bg-slate-100 text-slate-400 rounded-full">
+              <FileText size={28} />
+            </div>
+            <p className="text-sm font-medium text-slate-700">Nenhuma ordem de serviço encontrada</p>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {busca ? 'Tente buscar por outro termo ou limpe o campo de pesquisa.' : 'Clique em "Nova Ordem" para cadastrar a primeira tarefa.'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -132,8 +162,9 @@ export default function OrdensPage() {
                     <td className="px-6 py-4 text-slate-700 max-w-xs truncate">{o.titulo}</td>
                     <td className="px-6 py-4 text-slate-600">{o.agente?.nome || 'Não atribuído'}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(o.status)}`}>
-                        {o.status.replace('_', ' ')}
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusBadge(o.status)}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {o.status ? o.status.replace('_', ' ') : 'INDEFINIDO'}
                       </span>
                     </td>
                   </tr>
