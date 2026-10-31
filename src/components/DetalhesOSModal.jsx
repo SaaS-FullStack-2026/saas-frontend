@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
+import RelatorioOSModal from './RelatorioOSModal';
 import { 
   X, 
   Calendar, 
@@ -16,17 +17,34 @@ import {
   Wrench,
   Loader2,
   Share2,
-  Check
+  Check,
+  Printer,
+  Star,
+  Edit3
 } from 'lucide-react';
 
-export default function DetalhesOSModal({ os, isOpen, onClose }) {
+export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada }) {
   const [historico, setHistorico] = useState([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [relatorioAberto, setRelatorioAberto] = useState(false);
+
+  // Estados para edição/vinculação de ativo
+  const [editandoAtivo, setEditandoAtivo] = useState(false);
+  const [equipamentosCliente, setEquipamentosCliente] = useState([]);
+  const [carregandoEquipamentos, setCarregandoEquipamentos] = useState(false);
+  const [ativoSelecionadoId, setAtivoSelecionadoId] = useState('');
+  const [salvandoAtivo, setSalvandoAtivo] = useState(false);
+  const [osLocal, setOsLocal] = useState(os);
+
+  useEffect(() => {
+    setOsLocal(os);
+    setEditandoAtivo(false);
+  }, [os]);
 
   const copiarRastreio = () => {
-    if (!os) return;
-    const cod = os.codigoRastreio || `TRK-OS${os.id}`;
+    if (!osLocal) return;
+    const cod = osLocal.codigoRastreio || `TRK-OS${osLocal.id}`;
     const url = `${window.location.origin}/rastreio/${cod}`;
     navigator.clipboard.writeText(url);
     setCopiado(true);
@@ -34,9 +52,9 @@ export default function DetalhesOSModal({ os, isOpen, onClose }) {
   };
 
   useEffect(() => {
-    if (isOpen && os?.id) {
+    if (isOpen && osLocal?.id) {
       setCarregandoHistorico(true);
-      api.get(`/ordens-servico/${os.id}/historico`)
+      api.get(`/ordens-servico/${osLocal.id}/historico`)
         .then((res) => {
           setHistorico(res.data || []);
         })
@@ -48,9 +66,44 @@ export default function DetalhesOSModal({ os, isOpen, onClose }) {
           setCarregandoHistorico(false);
         });
     }
-  }, [isOpen, os?.id]);
+  }, [isOpen, osLocal?.id]);
 
-  if (!isOpen || !os) return null;
+  const abrirEdicaoAtivo = async () => {
+    setEditandoAtivo(true);
+    setAtivoSelecionadoId(osLocal.equipamento?.id || '');
+    if (osLocal.cliente?.id) {
+      try {
+        setCarregandoEquipamentos(true);
+        const res = await api.get('/equipamentos', {
+          params: { clienteId: osLocal.cliente.id }
+        });
+        setEquipamentosCliente(res.data || []);
+      } catch (err) {
+        console.error('Erro ao carregar equipamentos do cliente:', err);
+      } finally {
+        setCarregandoEquipamentos(false);
+      }
+    }
+  };
+
+  const salvarAtivo = async () => {
+    try {
+      setSalvandoAtivo(true);
+      const res = await api.patch(`/ordens-servico/${osLocal.id}/equipamento`, {
+        equipamentoId: ativoSelecionadoId ? Number(ativoSelecionadoId) : null
+      });
+      setOsLocal(res.data);
+      onOSAtualizada?.(res.data);
+      setEditandoAtivo(false);
+    } catch (err) {
+      console.error('Erro ao vincular ativo:', err);
+      alert('Não foi possível vincular o ativo à ordem de serviço.');
+    } finally {
+      setSalvandoAtivo(false);
+    }
+  };
+
+  if (!isOpen || !osLocal) return null;
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -75,248 +128,354 @@ export default function DetalhesOSModal({ os, isOpen, onClose }) {
   const formatarData = (dataStr) => {
     if (!dataStr) return 'Não registrado';
     try {
-      return new Date(dataStr).toLocaleString('pt-BR', {
+      const d = new Date(dataStr);
+      return d.toLocaleString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
+        minute: '2-digit'
       });
     } catch {
       return dataStr;
     }
   };
 
+  const catInfo = osLocal.equipamento ? getCategoriaInfo(osLocal.equipamento.categoria) : null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-xs font-bold text-blue-400 bg-blue-900/60 px-2 py-0.5 rounded border border-blue-700/50">
-                O.S. #{os.id}
-              </span>
-              <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${getStatusBadge(os.status)}`}>
-                {os.status ? os.status.replace('_', ' ') : 'INDEFINIDO'}
-              </span>
-              {os.prioridade && (
-                <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${getPrioridadeBadge(os.prioridade)}`}>
-                  {os.prioridade}
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+          {/* Header */}
+          <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-xs font-bold text-blue-400 bg-blue-900/60 px-2 py-0.5 rounded border border-blue-700/50">
+                  O.S. #{osLocal.id}
                 </span>
-              )}
-            </div>
-            <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">{os.titulo}</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={copiarRastreio}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-              title="Copiar link de rastreio para enviar ao cliente"
-            >
-              {copiado ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
-              <span>{copiado ? 'Link Copiado!' : 'Rastreio Cliente'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Conteúdo com Scroll */}
-        <div className="p-5 space-y-5 overflow-y-auto flex-1 text-slate-800 text-xs sm:text-sm">
-          {/* Descrição & Dados de Serviço */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-              {os.descricao || 'Nenhuma descrição detalhada informada.'}
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200 text-2xs text-slate-500">
-              <span className="flex items-center gap-1">
-                <Tag size={13} className="text-slate-400" />
-                Tipo: <strong className="text-slate-700 font-semibold">{os.tipoServico || 'PREVENTIVA'}</strong>
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar size={13} className="text-slate-400" />
-                Agendado: <strong className="text-slate-700 font-semibold">{formatarData(os.dataAgendamento)}</strong>
-              </span>
-            </div>
-          </div>
-
-          {/* Grid de Pessoas / Atores */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-              <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
-                <Building2 size={12} className="text-blue-600" /> Cliente
-              </span>
-              <p className="font-semibold text-slate-900 truncate">{os.cliente?.nome || 'Não vinculado'}</p>
-              {os.cliente?.telefone && (
-                <p className="text-2xs text-slate-500">{os.cliente.telefone}</p>
-              )}
-            </div>
-
-            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-              <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
-                <User size={12} className="text-emerald-600" /> Técnico em Campo
-              </span>
-              <p className="font-semibold text-slate-900 truncate">{os.agente?.nome || 'Aguardando Atribuição'}</p>
-              <p className="text-2xs text-slate-500">{os.agente ? 'Ativo' : 'Não atribuído'}</p>
-            </div>
-
-            <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
-              <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
-                <User size={12} className="text-indigo-600" /> Gestor Responsável
-              </span>
-              <p className="font-semibold text-slate-900 truncate">{os.gestor?.nome || 'Admin'}</p>
-              <p className="text-2xs text-slate-500">Supervisão</p>
-            </div>
-          </div>
-
-          {/* Equipamento / Ativo Vinculado */}
-          {os.equipamento && (
-            <div className="p-4 bg-gradient-to-r from-slate-50 to-blue-50/30 border border-slate-200 rounded-xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="text-2xl p-2 bg-white rounded-lg border border-slate-200 shadow-xs">
-                  {getCategoriaInfo(os.equipamento.categoria).emoji}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-xs sm:text-sm">{os.equipamento.nome}</span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getCategoriaInfo(os.equipamento.categoria).cor}`}>
-                      {getCategoriaInfo(os.equipamento.categoria).label.split('/')[0]}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {os.equipamento.fabricante || 'Marca N/D'} {os.equipamento.modelo ? `• ${os.equipamento.modelo}` : ''}
-                    {os.equipamento.numeroSerie ? ` • S/N: ${os.equipamento.numeroSerie}` : ''}
-                  </p>
-                  {os.equipamento.localizacao && (
-                    <p className="text-[11px] text-slate-600 font-medium mt-0.5">
-                      📍 Local: {os.equipamento.localizacao}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {os.equipamento.codigoQr && (
-                <div className="text-right hidden sm:block">
-                  <span className="text-[10px] text-slate-400 font-semibold block uppercase">Código QR</span>
-                  <span className="font-mono text-xs font-bold text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 block">
-                    {os.equipamento.codigoQr}
+                <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${getStatusBadge(osLocal.status)}`}>
+                  {osLocal.status ? osLocal.status.replace('_', ' ') : 'INDEFINIDO'}
+                </span>
+                {osLocal.prioridade && (
+                  <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${getPrioridadeBadge(osLocal.prioridade)}`}>
+                    {osLocal.prioridade}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">{osLocal.titulo}</h2>
             </div>
-          )}
-
-          {/* Timestamps Operacionais (Check-in e Check-out) */}
-          <div className="p-4 bg-blue-50/60 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="space-y-1">
-              <span className="font-semibold text-blue-900 flex items-center gap-1.5">
-                <Clock size={14} className="text-blue-600" /> Check-in (Início do Atendimento):
-              </span>
-              <span className="text-blue-800 font-mono text-2xs block">
-                {formatarData(os.dataCheckin)}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <span className="font-semibold text-emerald-900 flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-600" /> Check-out (Encerramento):
-              </span>
-              <span className="text-emerald-800 font-mono text-2xs block">
-                {formatarData(os.dataCheckout)}
-              </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setRelatorioAberto(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer"
+                title="Visualizar e Imprimir Relatório Técnico / PDF"
+              >
+                <Printer size={14} />
+                <span className="hidden sm:inline">Relatório / PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={copiarRastreio}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                title="Copiar link de rastreio para enviar ao cliente"
+              >
+                {copiado ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
+                <span className="hidden sm:inline">{copiado ? 'Copiado!' : 'Rastreio'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
 
-          {/* Laudo Técnico Descritivo */}
-          {os.laudoTecnico && (
-            <div className="space-y-2">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <FileText size={15} className="text-indigo-600" /> Laudo Técnico do Atendimento
-              </h3>
-              <div className="p-3.5 bg-indigo-50/50 border border-indigo-200 rounded-xl text-xs text-indigo-950 font-normal leading-relaxed italic">
-                "{os.laudoTecnico}"
+          {/* Conteúdo com Scroll */}
+          <div className="p-5 space-y-5 overflow-y-auto flex-1 text-slate-800 text-xs sm:text-sm">
+            {/* Descrição & Dados de Serviço */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+              <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                {osLocal.descricao || 'Nenhuma descrição detalhada informada.'}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200 text-2xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Tag size={13} className="text-slate-400" />
+                  Tipo: <strong className="text-slate-700 font-semibold">{osLocal.tipoServico || 'PREVENTIVA'}</strong>
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar size={13} className="text-slate-400" />
+                  Agendado: <strong className="text-slate-700 font-semibold">{formatarData(osLocal.dataAgendamento)}</strong>
+                </span>
               </div>
             </div>
-          )}
 
-          {/* Assinatura Digital do Cliente */}
-          {os.assinaturaCliente && (
-            <div className="space-y-2">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <PenTool size={15} className="text-emerald-600" /> Comprovante de Assinatura Digital do Cliente
-              </h3>
-              <div className="p-4 bg-white border border-slate-200 rounded-xl flex flex-col items-center justify-center space-y-2">
-                <div className="border border-slate-200 rounded-lg p-2 bg-slate-50 w-full max-w-sm flex items-center justify-center">
-                  <img
-                    src={os.assinaturaCliente}
-                    alt="Assinatura Digital do Cliente"
-                    className="max-h-28 object-contain"
-                  />
-                </div>
-                <div className="flex items-center gap-1 text-2xs text-emerald-700 font-semibold">
-                  <CheckCircle2 size={13} />
-                  <span>Assinatura validada e arquivada para auditoria jurídica</span>
-                </div>
+            {/* Grid de Pessoas / Atores */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
+                  <Building2 size={12} className="text-blue-600" /> Cliente
+                </span>
+                <p className="font-semibold text-slate-900 truncate">{osLocal.cliente?.nome || 'Não vinculado'}</p>
+                {osLocal.cliente?.telefone && (
+                  <p className="text-2xs text-slate-500">{osLocal.cliente.telefone}</p>
+                )}
+              </div>
+
+              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
+                  <User size={12} className="text-emerald-600" /> Técnico em Campo
+                </span>
+                <p className="font-semibold text-slate-900 truncate">{osLocal.agente?.nome || 'Aguardando Atribuição'}</p>
+                <p className="text-2xs text-slate-500">{osLocal.agente ? 'Ativo' : 'Não atribuído'}</p>
+              </div>
+
+              <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                <span className="text-2xs uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1">
+                  <User size={12} className="text-indigo-600" /> Gestor Responsável
+                </span>
+                <p className="font-semibold text-slate-900 truncate">{osLocal.gestor?.nome || 'Admin'}</p>
+                <p className="text-2xs text-slate-500">Supervisão</p>
               </div>
             </div>
-          )}
 
-          {/* Linha do Tempo / Histórico de Auditoria */}
-          <div className="space-y-3 pt-2 border-t border-slate-200">
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <History size={15} className="text-slate-600" /> Trilha de Auditoria do Ciclo de Vida
-            </h3>
-
-            {carregandoHistorico ? (
-              <div className="flex items-center gap-2 text-xs text-slate-400 py-4 justify-center">
-                <Loader2 size={16} className="animate-spin" />
-                <span>Carregando trilha de auditoria...</span>
+            {/* Equipamento / Ativo Vinculado com Opção de Vincular/Alterar */}
+            <div className="p-4 bg-gradient-to-r from-slate-50 via-blue-50/20 to-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-2xs uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1.5">
+                  <Wrench size={14} className="text-blue-600" /> Ativo / Equipamento Vinculado
+                </span>
+                {!editandoAtivo && (
+                  <button
+                    onClick={abrirEdicaoAtivo}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 bg-white border border-blue-200 px-2 py-0.5 rounded shadow-2xs hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    <Edit3 size={11} />
+                    <span>{osLocal.equipamento ? 'Alterar Ativo' : 'Vincular Ativo'}</span>
+                  </button>
+                )}
               </div>
-            ) : historico.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">Nenhum evento registrado no histórico.</p>
-            ) : (
-              <div className="space-y-2.5">
-                {historico.map((h) => (
-                  <div key={h.id} className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
+
+              {editandoAtivo ? (
+                <div className="space-y-2 pt-1 border-t border-slate-200">
+                  <label className="text-2xs font-semibold text-slate-600 block">
+                    Selecione o equipamento do cliente:
+                  </label>
+                  <select
+                    value={ativoSelecionadoId}
+                    onChange={(e) => setAtivoSelecionadoId(e.target.value)}
+                    disabled={carregandoEquipamentos || salvandoAtivo}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Nenhum ativo (Serviço Geral)</option>
+                    {equipamentosCliente.map((eq) => {
+                      const c = getCategoriaInfo(eq.categoria);
+                      return (
+                        <option key={eq.id} value={eq.id}>
+                          {c.emoji} {eq.nome} {eq.numeroSerie ? `(S/N: ${eq.numeroSerie})` : ''} - {eq.localizacao || c.label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setEditandoAtivo(false)}
+                      disabled={salvandoAtivo}
+                      className="px-2.5 py-1 text-2xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={salvarAtivo}
+                      disabled={salvandoAtivo}
+                      className="inline-flex items-center gap-1 px-3 py-1 text-2xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-xs cursor-pointer"
+                    >
+                      {salvandoAtivo ? <Loader2 size={11} className="animate-spin" /> : null}
+                      <span>Salvar Ativo</span>
+                    </button>
+                  </div>
+                </div>
+              ) : osLocal.equipamento ? (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl p-2 bg-white rounded-lg border border-slate-200 shadow-xs">
+                      {catInfo?.emoji}
+                    </div>
+                    <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-800">
-                          {h.statusAnterior ? `${h.statusAnterior} ➔ ${h.statusNovo}` : `Criada como ${h.statusNovo}`}
-                        </span>
-                        <span className="text-2xs text-slate-400 font-mono">
-                          por {h.usuarioNome}
+                        <span className="font-bold text-slate-900 text-xs sm:text-sm">{osLocal.equipamento.nome}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${catInfo?.cor}`}>
+                          {catInfo?.label.split('/')[0]}
                         </span>
                       </div>
-                      {h.observacao && (
-                        <p className="text-2xs text-slate-500 italic">{h.observacao}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {osLocal.equipamento.fabricante || 'Marca N/D'} {osLocal.equipamento.modelo ? `• ${osLocal.equipamento.modelo}` : ''}
+                        {osLocal.equipamento.numeroSerie ? ` • S/N: ${osLocal.equipamento.numeroSerie}` : ''}
+                      </p>
+                      {osLocal.equipamento.localizacao && (
+                        <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                          📍 Local: {osLocal.equipamento.localizacao}
+                        </p>
                       )}
                     </div>
-                    <span className="text-2xs text-slate-400 whitespace-nowrap font-mono">
-                      {formatarData(h.createdAt)}
+                  </div>
+                  {osLocal.equipamento.codigoQr && (
+                    <div className="text-right hidden sm:block">
+                      <span className="text-[10px] text-slate-400 font-semibold block uppercase">Código QR</span>
+                      <span className="font-mono text-xs font-bold text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 block">
+                        {osLocal.equipamento.codigoQr}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 italic flex items-center justify-between">
+                  <span>Nenhum equipamento vinculado a esta ordem de serviço.</span>
+                  <button
+                    onClick={abrirEdicaoAtivo}
+                    className="text-blue-600 hover:underline font-semibold text-2xs cursor-pointer"
+                  >
+                    + Clique aqui para vincular
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Avaliação de Satisfação do Cliente CSAT */}
+            {osLocal.avaliacaoNota && (
+              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xs uppercase tracking-wider text-amber-800 font-bold flex items-center gap-1.5">
+                    <Star size={14} className="text-amber-500 fill-amber-500" /> Avaliação do Cliente (CSAT)
+                  </span>
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} size={15} fill={i < osLocal.avaliacaoNota ? 'currentColor' : 'none'} />
+                    ))}
+                    <span className="text-xs font-bold text-amber-900 ml-1">
+                      {osLocal.avaliacaoNota}.0 / 5.0
                     </span>
                   </div>
-                ))}
+                </div>
+                {osLocal.avaliacaoComentario && (
+                  <p className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-amber-200/80 italic">
+                    "{osLocal.avaliacaoComentario}"
+                  </p>
+                )}
               </div>
             )}
+
+            {/* Timestamps Operacionais (Check-in e Check-out) */}
+            <div className="p-4 bg-blue-50/60 border border-blue-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="space-y-1">
+                <span className="font-semibold text-blue-900 flex items-center gap-1.5">
+                  <Clock size={14} className="text-blue-600" /> Check-in (Início do Atendimento):
+                </span>
+                <span className="text-blue-800 font-mono text-2xs block">
+                  {formatarData(osLocal.dataCheckin)}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <span className="font-semibold text-emerald-900 flex items-center gap-1.5">
+                  <CheckCircle2 size={14} className="text-emerald-600" /> Check-out (Encerramento):
+                </span>
+                <span className="text-emerald-800 font-mono text-2xs block">
+                  {formatarData(osLocal.dataCheckout)}
+                </span>
+              </div>
+            </div>
+
+            {/* Laudo Técnico Descritivo */}
+            {osLocal.laudoTecnico && (
+              <div className="space-y-2">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <FileText size={15} className="text-indigo-600" /> Laudo Técnico do Atendimento
+                </h3>
+                <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-xl text-slate-700 leading-relaxed font-normal text-xs whitespace-pre-line">
+                  {osLocal.laudoTecnico}
+                </div>
+              </div>
+            )}
+
+            {/* Assinatura Digital do Cliente */}
+            {osLocal.assinaturaCliente ? (
+              <div className="space-y-2">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <PenTool size={15} className="text-emerald-600" /> Assinatura Digital do Cliente
+                </h3>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs max-w-xs w-full text-center">
+                    <img
+                      src={osLocal.assinaturaCliente}
+                      alt="Assinatura Digital Coletada"
+                      className="h-20 mx-auto object-contain"
+                    />
+                    <span className="text-2xs text-slate-400 block mt-1">Validação Biométrica em Tela</span>
+                  </div>
+                  <div className="text-left space-y-1 text-xs">
+                    <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold text-xs bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                      <CheckCircle2 size={14} /> Assinatura Coletada em Campo
+                    </span>
+                    <p className="text-slate-500 text-2xs">
+                      Coletada diretamente no dispositivo móvel do técnico com registro temporal de checkout.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Linha do Tempo de Auditoria */}
+            <div className="space-y-3 pt-2">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <History size={15} className="text-blue-600" /> Linha do Tempo & Auditoria Operacional
+              </h3>
+
+              {carregandoHistorico ? (
+                <div className="p-4 flex items-center justify-center gap-2 text-slate-400 text-xs">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Carregando histórico...</span>
+                </div>
+              ) : historico.length === 0 ? (
+                <p className="text-2xs text-slate-400 italic">Nenhum evento registrado ainda.</p>
+              ) : (
+                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                  {historico.map((h) => (
+                    <div key={h.id} className="relative flex items-start gap-3">
+                      <span className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-600 border-2 border-white ring-2 ring-blue-100" />
+                      <div className="flex-1 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-xs text-slate-800">
+                            {h.statusNovo ? h.statusNovo.replace('_', ' ') : 'ATUALIZAÇÃO'}
+                          </span>
+                          <span className="text-2xs font-mono text-slate-400">
+                            {formatarData(h.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-2xs text-slate-600 font-normal leading-relaxed">{h.observacao}</p>
+                        <span className="text-2xs text-slate-400 block pt-0.5">
+                          Por: <strong>{h.usuarioNome}</strong> ({h.usuarioPerfil})
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-          >
-            Fechar Visualização
-          </button>
-        </div>
       </div>
-    </div>
+
+      {/* Modal de Impressão / PDF */}
+      <RelatorioOSModal
+        os={osLocal}
+        isOpen={relatorioAberto}
+        onClose={() => setRelatorioAberto(false)}
+      />
+    </>
   );
 }

@@ -20,8 +20,38 @@ import {
   Calendar,
   Share2,
   Check,
-  Wrench
+  Wrench,
+  Star
 } from 'lucide-react';
+
+function obterInfoAtivo(os) {
+  if (os.equipamento) {
+    const cat = getCategoriaInfo(os.equipamento.categoria);
+    return {
+      emoji: cat.emoji,
+      nome: os.equipamento.nome,
+      cor: cat.cor,
+      vinculado: true
+    };
+  }
+  const t = ((os.titulo || '') + ' ' + (os.descricao || '')).toLowerCase();
+  if (t.includes('ar') || t.includes('split') || t.includes('clima')) {
+    return { emoji: '❄️', nome: 'Climatização', cor: 'text-cyan-700 bg-cyan-50 border-cyan-200', vinculado: false };
+  }
+  if (t.includes('roteador') || t.includes('rede') || t.includes('ti') || t.includes('fibra')) {
+    return { emoji: '📶', nome: 'TI & Redes', cor: 'text-indigo-700 bg-indigo-50 border-indigo-200', vinculado: false };
+  }
+  if (t.includes('fria') || t.includes('geladeira') || t.includes('congelad')) {
+    return { emoji: '🧊', nome: 'Refrigeração', cor: 'text-blue-700 bg-blue-50 border-blue-200', vinculado: false };
+  }
+  if (t.includes('dedetiz') || t.includes('praga') || t.includes('isca')) {
+    return { emoji: '🛡️', nome: 'Dedetização', cor: 'text-emerald-700 bg-emerald-50 border-emerald-200', vinculado: false };
+  }
+  if (t.includes('elevador') || t.includes('motor')) {
+    return { emoji: '⚙️', nome: 'Elevador / Motor', cor: 'text-amber-700 bg-amber-50 border-amber-200', vinculado: false };
+  }
+  return { emoji: '🔧', nome: 'Ativo Geral', cor: 'text-slate-700 bg-slate-50 border-slate-200', vinculado: false };
+}
 
 const KANBAN_COLUNAS = [
   { id: 'ABERTA', label: 'Aberta', color: 'border-amber-400 bg-amber-500/10 text-amber-700', badge: 'bg-amber-100 text-amber-800' },
@@ -261,13 +291,23 @@ export default function OrdensPage() {
                           {o.titulo}
                         </h4>
 
-                        {/* Equipamento Vinculado */}
-                        {o.equipamento && (
-                          <div className="bg-slate-50 border border-slate-200/90 rounded-md px-2 py-1 flex items-center gap-1.5 text-[11px] text-slate-700">
-                            <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
-                            <span className="font-medium truncate">{o.equipamento.nome}</span>
-                          </div>
-                        )}
+                        {/* Equipamento / Ativo Vinculado com Ícone */}
+                        {(() => {
+                          const ativo = obterInfoAtivo(o);
+                          return (
+                            <div className={`border rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] shadow-2xs ${ativo.cor}`}>
+                              <span className="flex items-center gap-1.5 font-semibold truncate">
+                                <span className="text-sm">{ativo.emoji}</span>
+                                <span className="truncate">{ativo.nome}</span>
+                              </span>
+                              {!ativo.vinculado && (
+                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-70 bg-white/70 px-1 rounded">
+                                  Auto
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Metadados: Cliente e Técnico */}
                         <div className="space-y-1 text-[11px] text-slate-600">
@@ -283,9 +323,17 @@ export default function OrdensPage() {
 
                         {/* Linha Inferior: Tipo de Serviço + Rastreio + Evidências */}
                         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                          <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
-                            {o.tipoServico || 'PREVENTIVA'}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
+                              {o.tipoServico || 'PREVENTIVA'}
+                            </span>
+                            {o.avaliacaoNota && (
+                              <span className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-bold">
+                                <Star size={10} className="fill-amber-500 text-amber-500" />
+                                {o.avaliacaoNota}.0
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-slate-500">
                             <button
                               onClick={(e) => copiarLinkRastreio(o, e)}
@@ -366,12 +414,21 @@ export default function OrdensPage() {
                       <td className="px-5 py-4 font-medium text-slate-900">{o.cliente?.nome || 'N/A'}</td>
                       <td className="px-5 py-4">
                         <div className="text-slate-700 max-w-xs truncate font-medium">{o.titulo}</div>
-                        {o.equipamento && (
-                          <div className="inline-flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
-                            <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
-                            <span className="truncate max-w-[140px]">{o.equipamento.nome}</span>
-                          </div>
-                        )}
+                        {(() => {
+                          const ativo = obterInfoAtivo(o);
+                          return (
+                            <div className="inline-flex items-center gap-1.5 text-[11px] text-slate-600 mt-0.5">
+                              <span>{ativo.emoji}</span>
+                              <span className="truncate max-w-[160px] font-medium">{ativo.nome}</span>
+                              {o.avaliacaoNota && (
+                                <span className="inline-flex items-center gap-0.5 text-amber-600 font-bold ml-1 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                                  <Star size={10} className="fill-amber-500" />
+                                  {o.avaliacaoNota}.0
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -433,6 +490,7 @@ export default function OrdensPage() {
         os={osSelecionada}
         isOpen={Boolean(osSelecionada)}
         onClose={() => setOsSelecionada(null)}
+        onOSAtualizada={carregarOrdens}
       />
     </div>
   );

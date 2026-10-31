@@ -1,24 +1,26 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { CheckCircle2, Clock, TrendingUp, Layers, RotateCw, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Clock, TrendingUp, Layers, RotateCw, AlertTriangle, Star, Wrench } from 'lucide-react';
 
 export default function DashboardPage() {
   const [ordens, setOrdens] = useState([]);
+  const [totalEquipamentos, setTotalEquipamentos] = useState(0);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
 
   const carregarMetricas = async () => {
     try {
       setCarregando(true);
-      // Tenta buscar os dados com timeout de 5 segundos
-      const res = await api.get('/ordens-servico', { timeout: 5000 });
-      setOrdens(res.data);
+      const [resOrdens, resEqp] = await Promise.all([
+        api.get('/ordens-servico', { timeout: 8000 }),
+        api.get('/equipamentos', { timeout: 8000 }).catch(() => ({ data: [] }))
+      ]);
+      setOrdens(resOrdens.data || []);
+      setTotalEquipamentos(resEqp.data?.length || 0);
     } catch (err) {
       console.error('Erro ao buscar dados do dashboard:', err);
-      // Exibe aviso amigável para o usuário caso o backend não responda
-      alert('Não foi possível conectar com o servidor. Verifique se o back-end em Spring Boot está em execução.');
+      setErro('Não foi possível conectar com o servidor para obter métricas.');
     } finally {
-      // O bloco 'finally' GARANTE que a tela nunca trave no estado "Atualizando..."
       setCarregando(false);
     }
   };
@@ -31,11 +33,18 @@ export default function DashboardPage() {
   const emAtendimento = ordens.filter((o) => o.status === 'EM_DESLOCAMENTO' || o.status === 'EM_ATENDIMENTO').length;
   const concluidas = ordens.filter((o) => o.status === 'CONCLUIDA').length;
 
+  const ordensComAvaliacao = ordens.filter((o) => o.avaliacaoNota != null);
+  const mediaCsat = ordensComAvaliacao.length > 0 
+    ? (ordensComAvaliacao.reduce((acc, o) => acc + o.avaliacaoNota, 0) / ordensComAvaliacao.length).toFixed(1)
+    : '5.0';
+
   const cards = [
     { title: 'Ordens Pendentes', count: abertas, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
     { title: 'Em Execução / Campo', count: emAtendimento, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
     { title: 'Concluídas', count: concluidas, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { title: 'Total Cadastrado', count: ordens.length, icon: Layers, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { title: 'Satisfação CSAT', count: `${mediaCsat} ⭐`, icon: Star, color: 'text-amber-500', bg: 'bg-amber-50', sub: `${ordensComAvaliacao.length} avaliações` },
+    { title: 'Ativos Cadastrados', count: totalEquipamentos, icon: Wrench, color: 'text-cyan-600', bg: 'bg-cyan-50', sub: 'Com QR Code' },
+    { title: 'Total de Ordens', count: ordens.length, icon: Layers, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   const passosMaquinaEstados = [
@@ -83,23 +92,26 @@ export default function DashboardPage() {
       )}
 
       {/* Cards de Métricas Reais */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
-            <div key={i} className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between transition-all hover:border-slate-300">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{c.title}</p>
+            <div key={i} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between transition-all hover:border-slate-300 min-h-[110px]">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{c.title}</p>
+                <div className={`p-2 rounded-lg ${c.bg} ${c.color}`}>
+                  <Icon size={18} />
+                </div>
+              </div>
+              <div className="mt-2">
                 {carregando ? (
-                  <div className="h-8 w-16 bg-slate-200 rounded-md animate-pulse my-1" />
+                  <div className="h-7 w-14 bg-slate-200 rounded animate-pulse" />
                 ) : (
-                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
                     {c.count}
                   </h3>
                 )}
-              </div>
-              <div className={`p-3 rounded-xl ${c.bg} ${c.color}`}>
-                <Icon size={24} />
+                {c.sub && <span className="text-[10px] text-slate-400 block mt-0.5">{c.sub}</span>}
               </div>
             </div>
           );

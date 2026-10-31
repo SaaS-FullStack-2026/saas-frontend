@@ -14,7 +14,10 @@ import {
   Layers,
   FileText,
   PenTool,
-  Calendar
+  Calendar,
+  Star,
+  Send,
+  Loader2
 } from 'lucide-react';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 
@@ -34,6 +37,13 @@ export default function RastreioPublicoPage() {
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+
+  // Estados para Avaliação CSAT
+  const [nota, setNota] = useState(5);
+  const [hoverNota, setHoverNota] = useState(0);
+  const [comentario, setComentario] = useState('');
+  const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
+  const [sucessoAvaliacao, setSucessoAvaliacao] = useState(false);
 
   const carregarRastreio = async () => {
     try {
@@ -56,6 +66,28 @@ export default function RastreioPublicoPage() {
       carregarRastreio();
     }
   }, [codigo]);
+
+  const enviarAvaliacao = async (e) => {
+    e.preventDefault();
+    try {
+      setEnviandoAvaliacao(true);
+      await axios.post(`${API_BASE_URL}/api/ordens-servico/rastreio/${codigo}/avaliar`, {
+        nota,
+        comentario
+      });
+      setDados((prev) => ({
+        ...prev,
+        avaliacaoNota: nota,
+        avaliacaoComentario: comentario
+      }));
+      setSucessoAvaliacao(true);
+    } catch (err) {
+      console.error('Erro ao enviar avaliação:', err);
+      alert('Não foi possível registrar a avaliação. Tente novamente.');
+    } finally {
+      setEnviandoAvaliacao(false);
+    }
+  };
 
   const getEtapaIndex = (status) => {
     const idx = ETAPAS.findIndex((e) => e.id === status);
@@ -248,6 +280,95 @@ export default function RastreioPublicoPage() {
                       <PenTool size={13} />
                       <span>Assinatura digital do cliente coletada no encerramento.</span>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Avaliação CSAT Pós-Atendimento (1 a 5 Estrelas) */}
+              {dados.status === 'CONCLUIDA' && (
+                <div className="bg-gradient-to-br from-slate-900 to-amber-950/20 border border-amber-500/30 rounded-xl p-5 space-y-3.5">
+                  <div className="text-center space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">
+                      Pesquisa de Satisfação (CSAT)
+                    </span>
+                    <h4 className="text-sm font-bold text-slate-100">
+                      {dados.avaliacaoNota ? 'Sua Avaliação do Atendimento' : 'Como foi o atendimento do nosso técnico?'}
+                    </h4>
+                  </div>
+
+                  {dados.avaliacaoNota ? (
+                    <div className="text-center space-y-2 pt-1">
+                      <div className="flex items-center justify-center gap-1.5 text-amber-400">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={24}
+                            className={star <= dados.avaliacaoNota ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-300 font-medium">
+                        Nota: {dados.avaliacaoNota}.0 / 5.0 estrelas
+                      </p>
+                      {dados.avaliacaoComentario && (
+                        <p className="text-xs text-slate-400 italic bg-slate-800/80 p-3 rounded-lg border border-slate-700 max-w-md mx-auto">
+                          "{dados.avaliacaoComentario}"
+                        </p>
+                      )}
+                      <span className="inline-block text-[11px] text-emerald-400 font-semibold bg-emerald-950/40 border border-emerald-500/30 px-3 py-1 rounded-full">
+                        ✓ Obrigado pela sua avaliação!
+                      </span>
+                    </div>
+                  ) : (
+                    <form onSubmit={enviarAvaliacao} className="space-y-3 text-center">
+                      {/* Seletor de 5 Estrelas */}
+                      <div className="flex items-center justify-center gap-2 py-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            type="button"
+                            key={star}
+                            onClick={() => setNota(star)}
+                            onMouseEnter={() => setHoverNota(star)}
+                            onMouseLeave={() => setHoverNota(0)}
+                            className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                          >
+                            <Star
+                              size={28}
+                              className={
+                                star <= (hoverNota || nota)
+                                  ? 'fill-amber-400 text-amber-400 transition-colors'
+                                  : 'text-slate-600 hover:text-slate-500 transition-colors'
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="text-xs text-amber-300 font-semibold">
+                        {nota === 5 ? 'Excelente! ⭐⭐⭐⭐⭐' :
+                         nota === 4 ? 'Muito bom! ⭐⭐⭐⭐' :
+                         nota === 3 ? 'Regular ⭐⭐⭐' :
+                         nota === 2 ? 'Ruim ⭐⭐' : 'Muito insatisfeito ⭐'}
+                      </div>
+
+                      {/* Comentário Opcional */}
+                      <textarea
+                        rows={2}
+                        value={comentario}
+                        onChange={(e) => setComentario(e.target.value)}
+                        placeholder="Deixe um comentário sobre a pontualidade, educação ou qualidade técnica (opcional)..."
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={enviandoAvaliacao}
+                        className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5 py-2 rounded-lg text-xs shadow-md transition-all cursor-pointer disabled:opacity-60"
+                      >
+                        {enviandoAvaliacao ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                        <span>{enviandoAvaliacao ? 'Enviando...' : 'Confirmar Avaliação'}</span>
+                      </button>
+                    </form>
                   )}
                 </div>
               )}
