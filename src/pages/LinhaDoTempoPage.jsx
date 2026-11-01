@@ -24,13 +24,16 @@ import {
   Eye
 } from 'lucide-react';
 
-const HORA_INICIAL_TIMELINE = 6;
-const HORA_FINAL_TIMELINE = 23;
-const HORAS_TIMELINE = Array.from(
-  { length: HORA_FINAL_TIMELINE - HORA_INICIAL_TIMELINE + 1 },
-  (_, i) => i + HORA_INICIAL_TIMELINE
-); // 06:00 até 23:00
-const LARGURA_HORA_PX = 120; // 120px por hora para clareza visual
+const HORA_INICIAL_TIMELINE = 0; // 00:00 (Meia-noite)
+const HORA_FINAL_TIMELINE = 23;  // 23:00 (Noite)
+const HORAS_TIMELINE = Array.from({ length: 24 }, (_, i) => i); // Grade completa de 24 horas (00:00 às 23:00)
+const LARGURA_HORA_PX = 115; // 115px por hora para scroll suave
+
+function obterDataLocalHoje() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 function calcularAtraso(os) {
   if (!os?.dataAgendamento || os.status === 'CONCLUIDA' || os.status === 'CANCELADA') {
@@ -41,8 +44,9 @@ function calcularAtraso(os) {
   const dataAg = new Date(os.dataAgendamento);
 
   // Apenas considera atraso no dia de hoje ou em datas passadas
-  const dataAgStr = dataAg.toISOString().split('T')[0];
-  const hojeStr = agora.toISOString().split('T')[0];
+  const pad = (n) => String(n).padStart(2, '0');
+  const dataAgStr = `${dataAg.getFullYear()}-${pad(dataAg.getMonth() + 1)}-${pad(dataAg.getDate())}`;
+  const hojeStr = obterDataLocalHoje();
   if (dataAgStr > hojeStr) {
     return { atrasada: false };
   }
@@ -100,9 +104,7 @@ function obterInfoAtivo(os) {
 }
 
 export default function LinhaDoTempoPage() {
-  const [dataSelecionada, setDataSelecionada] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [dataSelecionada, setDataSelecionada] = useState(obterDataLocalHoje());
   const [tecnicos, setTecnicos] = useState([]);
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -124,8 +126,10 @@ export default function LinhaDoTempoPage() {
         api.get('/ordens-servico')
       ]);
 
-      const apenasAgentes = (resUsuarios.data || []).filter((u) => u.perfil === 'AGENTE');
-      setTecnicos(apenasAgentes);
+      const apenasAgentes = (resUsuarios.data || []).filter(
+        (u) => (u.perfil || '').toUpperCase() === 'AGENTE'
+      );
+      setTecnicos(apenasAgentes.length > 0 ? apenasAgentes : (resUsuarios.data || []));
       setOrdens(resOrdens.data || []);
     } catch (err) {
       console.error('Erro ao carregar linha do tempo:', err);
@@ -141,21 +145,24 @@ export default function LinhaDoTempoPage() {
 
   // Navegação de Datas
   const mudarDataRelativa = (dias) => {
-    const d = new Date(dataSelecionada + 'T12:00:00');
-    d.setDate(d.getDate() + dias);
-    setDataSelecionada(d.toISOString().split('T')[0]);
+    const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
+    const d = new Date(ano, mes - 1, dia + dias, 12, 0, 0);
+    const pad = (n) => String(n).padStart(2, '0');
+    setDataSelecionada(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   };
 
   const irParaHoje = () => {
-    setDataSelecionada(new Date().toISOString().split('T')[0]);
+    setDataSelecionada(obterDataLocalHoje());
   };
 
   // Separação de Ordens: do Dia vs Fila de Espera (Sem Técnico)
   const ordensDoDia = useMemo(() => {
     return ordens.filter((o) => {
       if (!o.dataAgendamento) return false;
-      const dataOS = o.dataAgendamento.split('T')[0];
-      return dataOS === dataSelecionada;
+      const d = new Date(o.dataAgendamento);
+      const pad = (n) => String(n).padStart(2, '0');
+      const dataOSLocal = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return dataOSLocal === dataSelecionada;
     });
   }, [ordens, dataSelecionada]);
 
@@ -193,9 +200,10 @@ export default function LinhaDoTempoPage() {
     if (!draggedOS) return;
 
     try {
-      // Monta nova data de agendamento com timezone completo ISO-8601
-      const horaStr = String(hora).padStart(2, '0');
-      const dataIso = new Date(`${dataSelecionada}T${horaStr}:00:00`).toISOString();
+      // Monta data exata no fuso local e converte para ISO completo
+      const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
+      const dataObj = new Date(ano, mes - 1, dia, hora, 0, 0);
+      const dataIso = dataObj.toISOString();
 
       // Chamada à API com recálculo inteligente no backend
       const res = await api.patch(`/ordens-servico/${draggedOS.id}/reagendar`, {
@@ -229,7 +237,7 @@ export default function LinhaDoTempoPage() {
   };
 
   // Posição da "Linha do Agora" (se a data selecionada for hoje)
-  const isHoje = dataSelecionada === new Date().toISOString().split('T')[0];
+  const isHoje = dataSelecionada === obterDataLocalHoje();
   const agora = new Date();
   const horaAgoraFloat = agora.getHours() + agora.getMinutes() / 60;
   const linhaAgoraLeftPx = (horaAgoraFloat - HORA_INICIAL_TIMELINE) * LARGURA_HORA_PX;
@@ -394,6 +402,33 @@ export default function LinhaDoTempoPage() {
         </div>
       )}
 
+      {/* Banner Informativo se o Dia Selecionado não tiver Ordens Agendadas */}
+      {ordensDoDia.length === 0 && !carregando && (
+        <div className="p-3.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <Calendar className="text-blue-600 shrink-0" size={17} />
+            <span>
+              Nenhuma ordem de serviço agendada para <strong>{new Date(dataSelecionada + 'T12:00:00').toLocaleDateString('pt-BR')}</strong>. 
+              {ordensFilaEspera.length > 0 && ' Arraste chamados da Fila de Espera para o horário desejado ou navegue entre os dias:'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <button
+              onClick={() => mudarDataRelativa(-1)}
+              className="px-2.5 py-1 text-2xs font-semibold bg-white border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer text-blue-800"
+            >
+              ← Ver Dia Anterior
+            </button>
+            <button
+              onClick={() => mudarDataRelativa(1)}
+              className="px-2.5 py-1 text-2xs font-semibold bg-white border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer text-blue-800"
+            >
+              Ver Próximo Dia →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Matriz Gantt / Linha do Tempo */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
         {/* Barra de Legenda & Status */}
@@ -456,8 +491,15 @@ export default function LinhaDoTempoPage() {
             )}
 
             {/* Linhas de Cada Técnico */}
-            <div className="divide-y divide-slate-100">
-              {tecnicos.map((tecnico) => {
+            {tecnicos.length === 0 ? (
+              <div className="p-12 text-center bg-white text-xs text-slate-500 space-y-2">
+                <User className="mx-auto text-slate-400" size={32} />
+                <p className="font-semibold text-slate-800 text-sm">Nenhum colaborador carregado</p>
+                <p className="text-slate-500">Cadastre técnicos de campo na página de Equipes ou clique no botão Atualizar.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {tecnicos.map((tecnico) => {
                 const ordensTecnicoHoje = ordensDoDia.filter((o) => o.agente?.id === tecnico.id);
                 const minutosTotais = ordensTecnicoHoje.reduce(
                   (acc, o) => acc + (o.duracaoEstimadaMinutos || 60),
@@ -628,6 +670,7 @@ export default function LinhaDoTempoPage() {
                 );
               })}
             </div>
+            )}
           </div>
         </div>
       </div>
