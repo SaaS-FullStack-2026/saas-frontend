@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import DetalhesOSModal from '../components/DetalhesOSModal';
+import NavegacaoOperacional from '../components/layout/NavegacaoOperacional';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 import { 
   Clock, 
@@ -355,6 +356,9 @@ export default function LinhaDoTempoPage() {
 
   return (
     <div className="space-y-4">
+      {/* Barra de Navegação da Tríade Operacional */}
+      <NavegacaoOperacional />
+
       {/* Cabeçalho */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>

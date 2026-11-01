@@ -19,7 +19,7 @@ import {
   Loader2
 } from 'lucide-react';
 
-export default function UsuariosPage() {
+export default function UsuariosPage({ isTab = false }) {
   const [usuarios, setUsuarios] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -174,38 +174,62 @@ export default function UsuariosPage() {
   const totalAtivos = useMemo(() => usuarios.filter((u) => u.ativo).length, [usuarios]);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-4">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Users className="text-blue-600" size={24} />
-            <span>Equipe e Usuários</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Gestão de colaboradores, atribuição de técnicos de campo e administradores do sistema.
-          </p>
-        </div>
+      {!isTab ? (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Users className="text-blue-600" size={24} />
+              <span>Equipe e Usuários</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Gestão de colaboradores, atribuição de técnicos de campo e administradores do sistema.
+            </p>
+          </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={carregarUsuarios}
-            disabled={carregando}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
-          >
-            <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
-            <span>Atualizar</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={carregarUsuarios}
+              disabled={carregando}
+              className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+            >
+              <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
+              <span>Atualizar</span>
+            </button>
 
-          <button
-            onClick={abrirModalNovo}
-            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
-          >
-            <UserPlus size={16} />
-            <span>Novo Membro</span>
-          </button>
+            <button
+              onClick={abrirModalNovo}
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            >
+              <UserPlus size={16} />
+              <span>Novo Membro</span>
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-xs font-bold text-slate-700">Membros da Equipe ({usuarios.length})</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={carregarUsuarios}
+              disabled={carregando}
+              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer"
+              title="Atualizar lista"
+            >
+              <RotateCw size={14} className={carregando ? 'animate-spin text-blue-600' : ''} />
+            </button>
+
+            <button
+              onClick={abrirModalNovo}
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs shadow-xs transition-colors cursor-pointer"
+            >
+              <UserPlus size={14} />
+              <span>Novo Membro</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Alerta de Sucesso */}
       {sucessoMsg && (

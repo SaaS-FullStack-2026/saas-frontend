@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Building2, Phone, Mail, RotateCw } from 'lucide-react';
 
-export default function ClientesPage() {
+export default function ClientesPage({ isTab = false }) {
   const [clientes, setClientes] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -23,21 +23,35 @@ export default function ClientesPage() {
   }, []);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Clientes Corporativos</h1>
-          <p className="text-xs sm:text-sm text-slate-500">Base cadastral de empresas e pontos de atendimento atendidos.</p>
+    <div className="space-y-4">
+      {!isTab ? (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Clientes Corporativos</h1>
+            <p className="text-xs sm:text-sm text-slate-500">Base cadastral de empresas e pontos de atendimento atendidos.</p>
+          </div>
+          <button
+            onClick={carregarClientes}
+            disabled={carregando}
+            className="self-start sm:self-auto inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+          >
+            <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
+            <span>Atualizar</span>
+          </button>
         </div>
-        <button
-          onClick={carregarClientes}
-          disabled={carregando}
-          className="self-start sm:self-auto inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
-        >
-          <RotateCw size={15} className={carregando ? 'animate-spin' : ''} />
-          <span>Atualizar</span>
-        </button>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-xs font-bold text-slate-700">Clientes & Unidades Cadastradas ({clientes.length})</span>
+          <button
+            onClick={carregarClientes}
+            disabled={carregando}
+            className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer"
+            title="Atualizar lista"
+          >
+            <RotateCw size={14} className={carregando ? 'animate-spin text-blue-600' : ''} />
+          </button>
+        </div>
+      )}
 
       {carregando ? (
         <div className="text-center py-12 text-sm text-slate-500">

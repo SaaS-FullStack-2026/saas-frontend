@@ -3,28 +3,39 @@ import {
   LayoutDashboard, 
   ClipboardList, 
   Map,
-  Clock,
-  Wrench,
-  Users, 
-  Building2, 
+  Clock, 
+  Database,
   Activity,
   Layers,
   Smartphone,
   X
 } from 'lucide-react';
 
-const menuItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/ordens', label: 'Ordens de Serviço', icon: ClipboardList },
-  { path: '/mapa', label: 'Mapa Operacional', icon: Map },
-  { path: '/linha-do-tempo', label: 'Linha do Tempo', icon: Clock },
-  { path: '/equipamentos', label: 'Equipamentos & QR', icon: Wrench },
-  { path: '/usuarios', label: 'Usuários', icon: Users },
-  { path: '/clientes', label: 'Clientes', icon: Building2 },
-  { path: '/status', label: 'Status da API', icon: Activity },
-];
-
 export default function Sidebar({ isOpen, onClose }) {
+  const gruposNavegacao = [
+    {
+      titulo: 'Visão Geral',
+      itens: [
+        { path: '/dashboard', label: 'Dashboard Cockpit', icon: LayoutDashboard }
+      ]
+    },
+    {
+      titulo: 'Operações & Despacho',
+      itens: [
+        { path: '/ordens', label: 'Ordens de Serviço', icon: ClipboardList },
+        { path: '/linha-do-tempo', label: 'Linha do Tempo (Gantt)', icon: Clock },
+        { path: '/mapa', label: 'Mapa em Tempo Real', icon: Map }
+      ]
+    },
+    {
+      titulo: 'Gestão & Cadastros',
+      itens: [
+        { path: '/cadastros', label: 'Central de Cadastros', icon: Database },
+        { path: '/status', label: 'Status da API', icon: Activity }
+      ]
+    }
+  ];
+
   return (
     <aside
       className={`fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-100 flex flex-col h-screen shrink-0 border-r border-slate-800 transition-transform duration-300 ease-in-out md:static md:w-64 md:translate-x-0 ${
@@ -53,51 +64,58 @@ export default function Sidebar({ isOpen, onClose }) {
         </button>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <div className="text-xs font-semibold uppercase text-slate-400 px-3 mb-2 tracking-wider">
-          Menu Principal
-        </div>
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                }`
-              }
-            >
-              <Icon size={18} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
+      {/* Navigation Links agrupados */}
+      <nav className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
+        {gruposNavegacao.map((grupo, gIdx) => (
+          <div key={gIdx} className="space-y-1">
+            <div className="text-[10px] font-bold uppercase text-slate-400 px-3 tracking-wider">
+              {grupo.titulo}
+            </div>
+            {grupo.itens.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm font-bold'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`
+                  }
+                >
+                  <Icon size={17} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
 
         {/* Divisor e Atalho para Modo Técnico */}
-        <div className="pt-4 mt-4 border-t border-slate-800">
-          <div className="text-xs font-semibold uppercase text-slate-400 px-3 mb-2 tracking-wider">
+        <div className="pt-3 border-t border-slate-800/80 space-y-1">
+          <div className="text-[10px] font-bold uppercase text-slate-400 px-3 tracking-wider">
             Visão de Campo
           </div>
           <NavLink
             to="/mobile"
             onClick={onClose}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-400 hover:bg-amber-950/40 hover:text-amber-300 transition-colors"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-amber-400 bg-amber-950/20 hover:bg-amber-950/40 border border-amber-800/30 transition-colors"
           >
-            <Smartphone size={18} />
+            <Smartphone size={17} />
             <span>Modo Técnico Mobile</span>
           </NavLink>
         </div>
       </nav>
 
       {/* Footer Info */}
-      <div className="p-4 border-t border-slate-800 text-xs text-slate-500">
-        <p className="truncate font-mono">FieldOps v0.0.1</p>
+      <div className="p-4 border-t border-slate-800 text-xs text-slate-500 flex items-center justify-between">
+        <span className="font-mono text-[10px]">FieldOps Pro</span>
+        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Online
+        </span>
       </div>
     </aside>
   );

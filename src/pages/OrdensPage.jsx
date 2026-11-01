@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import NovaOSModal from '../components/NovaOSModal';
 import DetalhesOSModal from '../components/DetalhesOSModal';
+import NavegacaoOperacional from '../components/layout/NavegacaoOperacional';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 import { 
   Plus, 
@@ -149,7 +150,10 @@ export default function OrdensPage() {
   };
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-4">
+      {/* Barra de Navegação da Tríade Operacional */}
+      <NavegacaoOperacional />
+
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
