@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { CATEGORIAS_EQUIPAMENTO, getCategoriaInfo } from '../utils/equipamentoCategorias';
 
-export default function EquipamentosPage() {
+export default function EquipamentosPage({ isTab = false }) {
   const [equipamentos, setEquipamentos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
@@ -68,38 +68,62 @@ export default function EquipamentosPage() {
   });
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="space-y-4">
       {/* Cabeçalho */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Wrench className="text-blue-600" size={24} />
-            <span>Gestão de Ativos & Equipamentos</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Cadastre os equipamentos dos clientes, gere etiquetas com QR Code e acompanhe manutenções.
-          </p>
+      {!isTab ? (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Wrench className="text-blue-600" size={24} />
+              <span>Gestão de Ativos & Equipamentos</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Cadastre os equipamentos dos clientes, gere etiquetas com QR Code e acompanhe manutenções.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={carregarEquipamentos}
+              disabled={carregando}
+              className={`inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer ${
+                carregando ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'
+              }`}
+            >
+              <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
+              <span className="hidden sm:inline">{carregando ? 'Atualizando...' : 'Atualizar'}</span>
+            </button>
+            <button
+              onClick={() => setModalNovoAberto(true)}
+              className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer active:scale-95"
+            >
+              <Plus size={16} />
+              <span>Novo Equipamento</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={carregarEquipamentos}
-            disabled={carregando}
-            className={`inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer ${
-              carregando ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'
-            }`}
-          >
-            <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
-            <span className="hidden sm:inline">{carregando ? 'Atualizando...' : 'Atualizar'}</span>
-          </button>
-          <button
-            onClick={() => setModalNovoAberto(true)}
-            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer active:scale-95"
-          >
-            <Plus size={16} />
-            <span>Novo Equipamento</span>
-          </button>
+      ) : (
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-xs font-bold text-slate-700">Inventário de Equipamentos ({equipamentos.length})</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={carregarEquipamentos}
+              disabled={carregando}
+              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer"
+              title="Atualizar lista"
+            >
+              <RotateCw size={14} className={carregando ? 'animate-spin text-blue-600' : ''} />
+            </button>
+
+            <button
+              onClick={() => setModalNovoAberto(true)}
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs shadow-xs transition-colors cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>Novo Ativo</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Alerta de Erro */}
       {erro && (

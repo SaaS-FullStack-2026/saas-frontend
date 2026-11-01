@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import OrdensPage from './pages/OrdensPage';
 import MapaPage from './pages/MapaPage';
 import LinhaDoTempoPage from './pages/LinhaDoTempoPage';
+import CadastrosPage from './pages/CadastrosPage';
 import EquipamentosPage from './pages/EquipamentosPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ClientesPage from './pages/ClientesPage';
@@ -39,9 +40,11 @@ function App() {
             <Route path="ordens" element={<OrdensPage />} />
             <Route path="mapa" element={<MapaPage />} />
             <Route path="linha-do-tempo" element={<LinhaDoTempoPage />} />
-            <Route path="equipamentos" element={<EquipamentosPage />} />
-            <Route path="usuarios" element={<UsuariosPage />} />
-            <Route path="clientes" element={<ClientesPage />} />
+            <Route path="cadastros" element={<CadastrosPage />} />
+            {/* Redirecionamentos da Tríade de Cadastros para a Central Unificada */}
+            <Route path="equipamentos" element={<Navigate to="/cadastros?tab=ativos" replace />} />
+            <Route path="usuarios" element={<Navigate to="/cadastros?tab=equipe" replace />} />
+            <Route path="clientes" element={<Navigate to="/cadastros?tab=clientes" replace />} />
             <Route path="status" element={<StatusCheck />} />
           </Route>
         </Route>
