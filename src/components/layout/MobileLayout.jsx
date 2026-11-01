@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Smartphone, ClipboardList, User, LogOut } from 'lucide-react';
+import { Route as RouteIcon, User, LogOut, Navigation } from 'lucide-react';
 
 export default function MobileLayout() {
   const navigate = useNavigate();
@@ -10,21 +10,30 @@ export default function MobileLayout() {
     navigate('/login');
   };
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-2xl border-x border-slate-200">
       {/* Header Mobile */}
       <header className="h-14 bg-slate-900 text-white px-5 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-2 font-bold text-base tracking-tight">
-          <Smartphone size={20} className="text-blue-400" />
+          <Navigation size={18} className="text-blue-400" />
           <span>FieldOps Técnico</span>
         </div>
-        <button
-          onClick={handleLogout}
-          title="Sair"
-          className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-        >
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          {user.nome && (
+            <span className="text-2xs text-slate-400 max-w-[120px] truncate hidden xs:inline">
+              {user.nome.split(' ')[0]}
+            </span>
+          )}
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       {/* Conteúdo Principal */}
@@ -43,8 +52,8 @@ export default function MobileLayout() {
             }`
           }
         >
-          <ClipboardList size={20} />
-          <span>Minhas O.S.</span>
+          <RouteIcon size={20} />
+          <span>Roteiro do Dia</span>
         </NavLink>
 
         <NavLink
