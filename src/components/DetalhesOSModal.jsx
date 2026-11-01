@@ -20,7 +20,13 @@ import {
   Check,
   Printer,
   Star,
-  Edit3
+  Edit3,
+  Sparkles,
+  MapPin,
+  Truck,
+  Navigation,
+  UserCheck,
+  RefreshCw
 } from 'lucide-react';
 
 export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada }) {
@@ -43,14 +49,22 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
   const [agendamentoAgenteId, setAgendamentoAgenteId] = useState('');
   const [agendamentoDuracao, setAgendamentoDuracao] = useState(60);
   const [agendamentoDeslocamento, setAgendamentoDeslocamento] = useState(30);
+  const [agendamentoMotivo, setAgendamentoMotivo] = useState('');
   const [listaTecnicos, setListaTecnicos] = useState([]);
   const [carregandoTecnicos, setCarregandoTecnicos] = useState(false);
   const [salvandoAgendamento, setSalvandoAgendamento] = useState(false);
+
+  // Estados para sugestões de técnicos próximos (BI & Despacho inteligente)
+  const [sugestoes, setSugestoes] = useState([]);
+  const [carregandoSugestoes, setCarregandoSugestoes] = useState(false);
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
 
   useEffect(() => {
     setOsLocal(os);
     setEditandoAtivo(false);
     setEditandoAgendamento(false);
+    setMostrarSugestoes(false);
+    setSugestoes([]);
   }, [os]);
 
   const copiarRastreio = () => {
@@ -131,6 +145,7 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
     setAgendamentoAgenteId(osLocal.agente?.id || '');
     setAgendamentoDuracao(osLocal.duracaoEstimadaMinutos || 60);
     setAgendamentoDeslocamento(osLocal.tempoDeslocamentoMinutos || 30);
+    setAgendamentoMotivo('');
 
     if (listaTecnicos.length === 0) {
       try {
@@ -146,6 +161,30 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
     }
   };
 
+  const carregarSugestoesProximidade = async () => {
+    if (!osLocal?.id) return;
+    try {
+      setCarregandoSugestoes(true);
+      setMostrarSugestoes(true);
+      const res = await api.get(`/ordens-servico/${osLocal.id}/sugestoes-tecnicos`);
+      setSugestoes(res.data || []);
+    } catch (err) {
+      console.error('Erro ao carregar sugestões por proximidade:', err);
+    } finally {
+      setCarregandoSugestoes(false);
+    }
+  };
+
+  const aplicarSugestao = (sugestao) => {
+    setAgendamentoAgenteId(sugestao.tecnicoId);
+    if (sugestao.tempoDeslocamentoMinutos) {
+      setAgendamentoDeslocamento(sugestao.tempoDeslocamentoMinutos);
+    }
+    setAgendamentoMotivo(
+      `Reatribuição inteligente por proximidade (${sugestao.distanciaKm != null ? sugestao.distanciaKm.toFixed(1) + ' km' : 'área próxima'})`
+    );
+  };
+
   const salvarAgendamento = async () => {
     try {
       setSalvandoAgendamento(true);
@@ -154,11 +193,13 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
         agenteId: agendamentoAgenteId ? Number(agendamentoAgenteId) : null,
         dataAgendamento: dataIso,
         duracaoEstimadaMinutos: Number(agendamentoDuracao) || 60,
-        tempoDeslocamentoMinutos: Number(agendamentoDeslocamento) || 30
+        tempoDeslocamentoMinutos: Number(agendamentoDeslocamento) || 30,
+        motivo: agendamentoMotivo.trim() || 'Reagendamento operacional'
       });
       setOsLocal(res.data);
       onOSAtualizada?.(res.data);
       setEditandoAgendamento(false);
+      setMostrarSugestoes(false);
 
       const resHist = await api.get(`/ordens-servico/${osLocal.id}/historico`);
       setHistorico(resHist.data || []);
@@ -227,6 +268,24 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
                 {osLocal.prioridade && (
                   <span className={`text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider border ${getPrioridadeBadge(osLocal.prioridade)}`}>
                     {osLocal.prioridade}
+                  </span>
+                )}
+                {osLocal.quantidadeReagendamentos > 0 && (
+                  <span 
+                    title={`Reagendada ${osLocal.quantidadeReagendamentos}x. Motivo recente: ${osLocal.motivoUltimoReagendamento || 'Não registrado'}`}
+                    className="text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider bg-purple-900/60 text-purple-200 border border-purple-700/60 inline-flex items-center gap-1"
+                  >
+                    <RefreshCw size={10} />
+                    <span>Reagendada ({osLocal.quantidadeReagendamentos}x)</span>
+                  </span>
+                )}
+                {osLocal.houveAtraso && (
+                  <span 
+                    title={`Atraso registrado: ${osLocal.minutosAtrasoRegistrado || 0} minutos`}
+                    className="text-2xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider bg-rose-900/60 text-rose-200 border border-rose-700/60 inline-flex items-center gap-1"
+                  >
+                    <AlertTriangle size={10} />
+                    <span>Atraso ({osLocal.minutosAtrasoRegistrado || 0}m)</span>
                   </span>
                 )}
               </div>
@@ -370,6 +429,95 @@ export default function DetalhesOSModal({ os, isOpen, onClose, onOSAtualizada })
                         <option value={60}>60 minutos</option>
                       </select>
                     </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Motivo do Reagendamento (Auditoria & BI)
+                      </label>
+                      <input
+                        type="text"
+                        value={agendamentoMotivo}
+                        onChange={(e) => setAgendamentoMotivo(e.target.value)}
+                        placeholder="Ex: Trânsito intenso na região, remanejamento de rota, cliente solicitou..."
+                        className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-normal"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Seção de Sugestão de Técnicos Próximos da Área */}
+                  <div className="p-3 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
+                        <Sparkles size={14} className="text-indigo-600" />
+                        <span>Sugestão de Profissionais Próximos</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={carregarSugestoesProximidade}
+                        disabled={carregandoSugestoes}
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-white border border-indigo-300 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <RefreshCw size={11} className={carregandoSugestoes ? 'animate-spin' : ''} />
+                        <span>{carregandoSugestoes ? 'Calculando rotas...' : 'Calcular Mais Próximos'}</span>
+                      </button>
+                    </div>
+
+                    {mostrarSugestoes && (
+                      <div className="space-y-1.5 pt-1">
+                        {sugestoes.length === 0 && !carregandoSugestoes && (
+                          <p className="text-2xs text-slate-500 italic">
+                            Nenhum técnico disponível com localização calculada no momento.
+                          </p>
+                        )}
+                        {sugestoes.map((s) => (
+                          <div
+                            key={s.tecnicoId}
+                            className={`p-2 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs transition-all ${
+                              s.recomendado
+                                ? 'bg-white border-indigo-400 ring-1 ring-indigo-300 shadow-2xs'
+                                : 'bg-white/80 border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-900">{s.nome}</span>
+                                {s.recomendado && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded border border-emerald-300">
+                                    ★ Recomendado
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-2xs text-slate-500 flex items-center gap-1">
+                                <MapPin size={10} className="text-slate-400 shrink-0" />
+                                <span>{s.localizacaoAtualDescricao}</span>
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0 text-2xs">
+                              <div className="text-right">
+                                <span className="font-bold text-indigo-700 block">
+                                  {s.distanciaKm != null ? `${s.distanciaKm.toFixed(1)} km` : '-'}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  ~{s.tempoDeslocamentoMinutos}m trânsito ({s.tarefasHoje} tarefas)
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => aplicarSugestao(s)}
+                                className={`px-2.5 py-1 text-2xs font-semibold rounded-lg cursor-pointer transition-colors ${
+                                  Number(agendamentoAgenteId) === s.tecnicoId
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                }`}
+                              >
+                                {Number(agendamentoAgenteId) === s.tecnicoId ? 'Selecionado ✓' : 'Escolher'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end gap-2 pt-1 border-t border-slate-100">
