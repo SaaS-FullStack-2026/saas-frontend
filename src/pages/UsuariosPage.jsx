@@ -11,17 +11,18 @@ import {
   X, 
   Check, 
   Users, 
-  Wrench, 
   KeyRound, 
   Mail, 
   User, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Inbox
 } from 'lucide-react';
 
 export default function UsuariosPage({ isTab = false }) {
   const [usuarios, setUsuarios] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState(null);
   const [filtroTexto, setFiltroTexto] = useState('');
   const [filtroPerfil, setFiltroPerfil] = useState('TODOS');
 
@@ -45,10 +46,13 @@ export default function UsuariosPage({ isTab = false }) {
   const carregarUsuarios = async () => {
     try {
       setCarregando(true);
-      const res = await api.get('/usuarios');
+      setErro(null);
+      // Timeout defensivo de 5s para evitar travamento da página
+      const res = await api.get('/usuarios', { timeout: 5000 });
       setUsuarios(res.data || []);
     } catch (err) {
       console.error('Erro ao buscar usuários:', err);
+      setErro('Não foi possível carregar a lista de membros da equipe. Verifique a conexão com o servidor.');
     } finally {
       setCarregando(false);
     }
@@ -155,7 +159,7 @@ export default function UsuariosPage({ isTab = false }) {
     }
   };
 
-  // Filtros
+  // Filtros em tempo real
   const usuariosFiltrados = useMemo(() => {
     return usuarios.filter((u) => {
       const matchesTexto = 
@@ -192,15 +196,15 @@ export default function UsuariosPage({ isTab = false }) {
             <button
               onClick={carregarUsuarios}
               disabled={carregando}
-              className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-all cursor-pointer disabled:opacity-60 active:scale-95"
             >
               <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
-              <span>Atualizar</span>
+              <span>{carregando ? 'Atualizando...' : 'Atualizar'}</span>
             </button>
 
             <button
               onClick={abrirModalNovo}
-              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer active:scale-95"
             >
               <UserPlus size={16} />
               <span>Novo Membro</span>
@@ -209,12 +213,14 @@ export default function UsuariosPage({ isTab = false }) {
         </div>
       ) : (
         <div className="flex items-center justify-between pb-1">
-          <span className="text-xs font-bold text-slate-700">Membros da Equipe ({usuarios.length})</span>
+          <span className="text-xs font-bold text-slate-700">
+            Membros da Equipe ({carregando ? '...' : usuarios.length})
+          </span>
           <div className="flex items-center gap-2">
             <button
               onClick={carregarUsuarios}
               disabled={carregando}
-              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer"
+              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-xs transition-all cursor-pointer disabled:opacity-60"
               title="Atualizar lista"
             >
               <RotateCw size={14} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -231,6 +237,22 @@ export default function UsuariosPage({ isTab = false }) {
         </div>
       )}
 
+      {/* Banner de Erro da API */}
+      {erro && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={18} className="shrink-0 text-rose-600" />
+            <span className="font-medium">{erro}</span>
+          </div>
+          <button
+            onClick={carregarUsuarios}
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition-colors"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {/* Alerta de Sucesso */}
       {sucessoMsg && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm flex items-center gap-2 animate-in fade-in">
@@ -239,43 +261,54 @@ export default function UsuariosPage({ isTab = false }) {
         </div>
       )}
 
-      {/* Cards de Métricas */}
+      {/* Cards de Métricas (Skeletons durante o carregamento) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-2xs uppercase tracking-wider text-slate-500 font-semibold block">Total Equipe</span>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{usuarios.length}</span>
-            <span className="text-xs text-slate-500">membros</span>
-          </div>
-        </div>
+        {carregando ? (
+          [1, 2, 3, 4].map((n) => (
+            <div key={n} className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs animate-pulse space-y-2">
+              <div className="h-3 bg-slate-200 rounded-md w-1/2" />
+              <div className="h-6 bg-slate-200 rounded-md w-1/3" />
+            </div>
+          ))
+        ) : (
+          <>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-2xs uppercase tracking-wider text-slate-500 font-semibold block">Total Equipe</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-slate-900">{usuarios.length}</span>
+                <span className="text-xs text-slate-500">membros</span>
+              </div>
+            </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-2xs uppercase tracking-wider text-blue-600 font-semibold block">Técnicos em Campo</span>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-blue-700">{totalAgentes}</span>
-            <span className="text-xs text-blue-600">agentes</span>
-          </div>
-        </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-2xs uppercase tracking-wider text-blue-600 font-semibold block">Técnicos em Campo</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-blue-700">{totalAgentes}</span>
+                <span className="text-xs text-blue-600">agentes</span>
+              </div>
+            </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-2xs uppercase tracking-wider text-indigo-600 font-semibold block">Gestão & Supervisão</span>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-indigo-700">{totalGestores}</span>
-            <span className="text-xs text-indigo-600">gestores</span>
-          </div>
-        </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-2xs uppercase tracking-wider text-indigo-600 font-semibold block">Gestão & Supervisão</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-indigo-700">{totalGestores}</span>
+                <span className="text-xs text-indigo-600">gestores</span>
+              </div>
+            </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-          <span className="text-2xs uppercase tracking-wider text-emerald-600 font-semibold block">Status Ativo</span>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-emerald-700">{totalAtivos}</span>
-            <span className="text-xs text-emerald-600">habilitados</span>
-          </div>
-        </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-2xs uppercase tracking-wider text-emerald-600 font-semibold block">Status Ativo</span>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-emerald-700">{totalAtivos}</span>
+                <span className="text-xs text-emerald-600">habilitados</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Barra de Busca e Filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -298,7 +331,7 @@ export default function UsuariosPage({ isTab = false }) {
               onClick={() => setFiltroPerfil(tab.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0 ${
                 filtroPerfil === tab.id
-                  ? 'bg-blue-600 text-white shadow-2xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -308,35 +341,59 @@ export default function UsuariosPage({ isTab = false }) {
         </div>
       </div>
 
-      {/* Lista de Usuários */}
+      {/* Lista de Usuários (Skeleton, Empty State ou Cards) */}
       {carregando ? (
-        <div className="text-center py-16 text-sm text-slate-500 bg-white rounded-xl border border-slate-200">
-          <RotateCw size={24} className="animate-spin text-blue-600 mx-auto mb-2" />
-          <span>Carregando membros da equipe...</span>
+        /* Skeleton Loaders da Lista */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div key={n} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4 animate-pulse">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-11 h-11 bg-slate-200 rounded-xl shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+                    <div className="h-3 bg-slate-150 rounded-md w-1/2" />
+                  </div>
+                </div>
+                <div className="w-16 h-6 bg-slate-200 rounded-full shrink-0" />
+              </div>
+              <div className="pt-2 border-t border-slate-100 h-4 bg-slate-150 rounded-md w-1/3" />
+              <div className="pt-3 border-t border-slate-100 flex gap-2">
+                <div className="h-8 bg-slate-200 rounded-xl flex-1" />
+                <div className="h-8 bg-slate-200 rounded-xl flex-1" />
+              </div>
+            </div>
+          ))}
         </div>
-      ) : usuariosFiltrados.length === 0 ? (
-        <div className="text-center py-14 bg-white rounded-xl border border-slate-200 text-slate-500 space-y-2">
-          <Users size={32} className="mx-auto text-slate-400 opacity-60" />
-          <p className="text-sm font-semibold text-slate-700">Nenhum membro encontrado</p>
-          <p className="text-xs text-slate-400">
-            {usuarios.length === 0 ? 'Cadastre o primeiro membro da sua equipe.' : 'Tente ajustar os filtros ou a busca.'}
+      ) : usuariosFiltrados.length === 0 && !erro ? (
+        /* Empty State */
+        <div className="flex flex-col items-center justify-center py-14 px-4 bg-white rounded-xl border border-slate-200 text-center">
+          <div className="p-3 bg-slate-100 text-slate-400 rounded-full mb-3">
+            <Inbox size={28} />
+          </div>
+          <h3 className="text-sm font-semibold text-slate-800">Nenhum membro encontrado</h3>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm">
+            {usuarios.length === 0
+              ? 'Cadastre o primeiro membro da sua equipe para começar a atribuir ordens.'
+              : 'Nenhum colaborador corresponde aos filtros selecionados.'}
           </p>
         </div>
       ) : (
+        /* Grid de Cards dos Colaboradores */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {usuariosFiltrados.map((u) => {
             const isGestor = u.perfil === 'GESTOR';
             return (
               <div
                 key={u.id}
-                className={`bg-white p-5 rounded-2xl border transition-all duration-200 space-y-4 shadow-2xs hover:shadow-md ${
+                className={`bg-white p-5 rounded-2xl border transition-all duration-200 space-y-4 shadow-xs hover:shadow-md ${
                   u.ativo ? 'border-slate-200' : 'border-slate-200 opacity-70 bg-slate-50/50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base text-white shadow-2xs ${
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-base text-white shadow-xs shrink-0 ${
                         isGestor
                           ? 'bg-gradient-to-br from-indigo-500 to-indigo-700'
                           : 'bg-gradient-to-br from-blue-500 to-blue-700'
@@ -344,7 +401,7 @@ export default function UsuariosPage({ isTab = false }) {
                     >
                       {u.nome?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
-                    <div className="truncate">
+                    <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-slate-900 text-sm sm:text-base truncate">{u.nome}</h3>
                       <p className="text-xs text-slate-500 font-mono truncate">{u.email}</p>
                     </div>
@@ -377,7 +434,7 @@ export default function UsuariosPage({ isTab = false }) {
                 <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
                   <button
                     onClick={() => abrirModalEditar(u)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer active:scale-95"
                   >
                     <Edit2 size={13} />
                     <span>Editar</span>
@@ -386,7 +443,7 @@ export default function UsuariosPage({ isTab = false }) {
                   <button
                     onClick={() => handleToggleStatus(u)}
                     title={u.ativo ? 'Desativar colaborador' : 'Ativar colaborador'}
-                    className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+                    className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-colors cursor-pointer active:scale-95 ${
                       u.ativo
                         ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
                         : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
@@ -413,8 +470,9 @@ export default function UsuariosPage({ isTab = false }) {
               </div>
               <button
                 type="button"
+                disabled={salvando}
                 onClick={() => setModalNovoAberto(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <X size={18} />
               </button>
@@ -435,10 +493,11 @@ export default function UsuariosPage({ isTab = false }) {
                 <input
                   type="text"
                   required
+                  disabled={salvando}
                   placeholder="Ex: Carlos Eletricista"
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -449,10 +508,11 @@ export default function UsuariosPage({ isTab = false }) {
                 <input
                   type="email"
                   required
+                  disabled={salvando}
                   placeholder="carlos@empresa.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -462,10 +522,11 @@ export default function UsuariosPage({ isTab = false }) {
                 </label>
                 <input
                   type="password"
+                  disabled={salvando}
                   placeholder="Padrão: 123456 (se deixar em branco)"
                   value={formData.senha}
                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -474,9 +535,10 @@ export default function UsuariosPage({ isTab = false }) {
                   <Shield size={13} className="text-slate-400" /> Perfil de Acesso
                 </label>
                 <select
+                  disabled={salvando}
                   value={formData.perfil}
                   onChange={(e) => setFormData({ ...formData, perfil: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer disabled:opacity-60"
                 >
                   <option value="AGENTE">Técnico de Campo (Agente / Executor)</option>
                   <option value="GESTOR">Gestor / Supervisor (Painel Administrativo)</option>
@@ -486,18 +548,19 @@ export default function UsuariosPage({ isTab = false }) {
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
+                  disabled={salvando}
                   onClick={() => setModalNovoAberto(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {salvando ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  <span>Criar Membro</span>
+                  {salvando ? <Loader2 size={14} className="animate-spin text-white" /> : <Check size={14} />}
+                  <span>{salvando ? 'Criando...' : 'Criar Membro'}</span>
                 </button>
               </div>
             </form>
@@ -516,8 +579,9 @@ export default function UsuariosPage({ isTab = false }) {
               </div>
               <button
                 type="button"
+                disabled={salvando}
                 onClick={() => setModalEditarAberto(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <X size={18} />
               </button>
@@ -538,9 +602,10 @@ export default function UsuariosPage({ isTab = false }) {
                 <input
                   type="text"
                   required
+                  disabled={salvando}
                   value={formData.nome}
                   onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -551,9 +616,10 @@ export default function UsuariosPage({ isTab = false }) {
                 <input
                   type="email"
                   required
+                  disabled={salvando}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -563,10 +629,11 @@ export default function UsuariosPage({ isTab = false }) {
                 </label>
                 <input
                   type="password"
+                  disabled={salvando}
                   placeholder="Deixe em branco para manter a senha atual"
                   value={formData.senha}
                   onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-60"
                 />
               </div>
 
@@ -575,9 +642,10 @@ export default function UsuariosPage({ isTab = false }) {
                   <Shield size={13} className="text-slate-400" /> Perfil de Acesso
                 </label>
                 <select
+                  disabled={salvando}
                   value={formData.perfil}
                   onChange={(e) => setFormData({ ...formData, perfil: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer disabled:opacity-60"
                 >
                   <option value="AGENTE">Técnico de Campo (Agente / Executor)</option>
                   <option value="GESTOR">Gestor / Supervisor (Painel Administrativo)</option>
@@ -588,9 +656,10 @@ export default function UsuariosPage({ isTab = false }) {
                 <input
                   type="checkbox"
                   id="ativoCheckbox"
+                  disabled={salvando}
                   checked={formData.ativo}
                   onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
-                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                  className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer disabled:opacity-60"
                 />
                 <label htmlFor="ativoCheckbox" className="text-xs font-medium text-slate-700 cursor-pointer">
                   Conta Ativa (Habilitada para login e atribuição de serviços)
@@ -600,18 +669,19 @@ export default function UsuariosPage({ isTab = false }) {
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
+                  disabled={salvando}
                   onClick={() => setModalEditarAberto(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {salvando ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                  <span>Salvar Alterações</span>
+                  {salvando ? <Loader2 size={14} className="animate-spin text-white" /> : <Check size={14} />}
+                  <span>{salvando ? 'Salvando...' : 'Salvar Alterações'}</span>
                 </button>
               </div>
             </form>
