@@ -11,9 +11,8 @@ import {
   QrCode, 
   Building2, 
   MapPin, 
-  Tag, 
   Filter,
-  CheckCircle2
+  Inbox
 } from 'lucide-react';
 import { CATEGORIAS_EQUIPAMENTO, getCategoriaInfo } from '../utils/equipamentoCategorias';
 
@@ -103,12 +102,14 @@ export default function EquipamentosPage({ isTab = false }) {
         </div>
       ) : (
         <div className="flex items-center justify-between pb-1">
-          <span className="text-xs font-bold text-slate-700">Inventário de Equipamentos ({equipamentos.length})</span>
+          <span className="text-xs font-bold text-slate-700">
+            Inventário de Equipamentos ({carregando ? '...' : equipamentos.length})
+          </span>
           <div className="flex items-center gap-2">
             <button
               onClick={carregarEquipamentos}
               disabled={carregando}
-              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer"
+              className="p-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
               title="Atualizar lista"
             >
               <RotateCw size={14} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -127,14 +128,14 @@ export default function EquipamentosPage({ isTab = false }) {
 
       {/* Alerta de Erro */}
       {erro && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3 animate-in fade-in">
           <div className="flex items-center gap-2.5">
             <AlertCircle size={18} className="shrink-0 text-rose-600" />
-            <span>{erro}</span>
+            <span className="font-medium">{erro}</span>
           </div>
           <button
             onClick={carregarEquipamentos}
-            className="text-xs font-semibold text-rose-700 hover:text-rose-800 underline shrink-0 cursor-pointer"
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition-colors"
           >
             Tentar novamente
           </button>
@@ -155,7 +156,7 @@ export default function EquipamentosPage({ isTab = false }) {
             />
           </div>
           <div className="text-xs text-slate-500">
-            Total cadastrado: <strong>{equipamentosFiltrados.length}</strong> ativos
+            Total cadastrado: <strong>{carregando ? '...' : equipamentosFiltrados.length}</strong> ativos
           </div>
         </div>
 
@@ -198,23 +199,28 @@ export default function EquipamentosPage({ isTab = false }) {
       {/* Grid / Tabela de Equipamentos */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {carregando ? (
-          <div className="p-6 space-y-4 animate-pulse">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-none">
-                <div className="h-5 bg-slate-200 rounded w-28" />
-                <div className="h-5 bg-slate-200 rounded w-40" />
-                <div className="h-5 bg-slate-200 rounded w-32 hidden sm:block" />
-                <div className="h-7 bg-slate-200 rounded-lg w-24" />
+          /* Skeletons de Linhas da Tabela */
+          <div className="p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <div key={n} className="flex items-center justify-between gap-4 p-3 bg-slate-50/60 rounded-lg animate-pulse">
+                <div className="h-4 bg-slate-200 rounded-md w-24" />
+                <div className="space-y-1 flex-1">
+                  <div className="h-4 bg-slate-200 rounded-md w-1/3" />
+                  <div className="h-3 bg-slate-150 rounded-md w-1/4" />
+                </div>
+                <div className="h-6 bg-slate-200 rounded-full w-28 hidden sm:block" />
+                <div className="h-8 bg-slate-200 rounded-lg w-20" />
               </div>
             ))}
           </div>
-        ) : equipamentosFiltrados.length === 0 ? (
-          <div className="text-center py-12 px-4 space-y-3">
-            <div className="inline-flex p-3 bg-slate-100 text-slate-400 rounded-full">
-              <Wrench size={32} />
+        ) : equipamentosFiltrados.length === 0 && !erro ? (
+          /* Empty State */
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="p-3 bg-slate-100 text-slate-400 rounded-full mb-3">
+              <Inbox size={28} />
             </div>
-            <p className="text-sm font-medium text-slate-700">Nenhum equipamento cadastrado</p>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-sm font-medium text-slate-700">Nenhum equipamento encontrado</p>
+            <p className="text-xs text-slate-500 max-w-sm mt-1">
               {busca || categoriaFiltro !== 'TODOS'
                 ? 'Nenhum ativo corresponde aos filtros selecionados.'
                 : 'Clique no botão "Novo Equipamento" para cadastrar ar-condicionado, roteadores, geladeiras, pontos de dedetização e outros ativos.'}
@@ -279,7 +285,7 @@ export default function EquipamentosPage({ isTab = false }) {
                       <td className="px-5 py-4 text-right">
                         <button
                           onClick={() => setEquipamentoQr(eq)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95"
                           title="Visualizar e Imprimir Etiqueta QR Code"
                         >
                           <QrCode size={14} />
