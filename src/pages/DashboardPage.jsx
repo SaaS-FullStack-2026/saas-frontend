@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import NovaOSModal from '../components/NovaOSModal';
 import DetalhesOSModal from '../components/DetalhesOSModal';
+import SimuladorModal from '../components/SimuladorModal';
 import { 
   CheckCircle2, 
   Clock, 
@@ -21,7 +22,8 @@ import {
   MapPin,
   ExternalLink,
   Shield,
-  Activity
+  Activity,
+  Bot
 } from 'lucide-react';
 
 function obterDataLocalHoje() {
@@ -84,6 +86,7 @@ export default function DashboardPage() {
   // Modais
   const [modalNovaOSAberto, setModalNovaOSAberto] = useState(false);
   const [osSelecionada, setOsSelecionada] = useState(null);
+  const [modalSimuladorAberto, setModalSimuladorAberto] = useState(false);
 
   const carregarMetricas = async () => {
     try {
@@ -211,6 +214,15 @@ export default function DashboardPage() {
 
         {/* Botões de Ação Rápida */}
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setModalSimuladorAberto(true)}
+            className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
+            title="Abrir Central de Simulação Autônoma (Bots Despachante & Técnicos)"
+          >
+            <Bot size={16} />
+            <span>Modo Simulação</span>
+          </button>
+
           <button
             onClick={() => setModalNovaOSAberto(true)}
             className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
@@ -461,6 +473,13 @@ export default function DashboardPage() {
         isOpen={Boolean(osSelecionada)}
         onClose={() => setOsSelecionada(null)}
         onOSAtualizada={carregarMetricas}
+      />
+
+      {/* Modal de Modo Simulação (Digital Twin) */}
+      <SimuladorModal
+        isOpen={modalSimuladorAberto}
+        onClose={() => setModalSimuladorAberto(false)}
+        onCicloExecutado={carregarMetricas}
       />
     </div>
   );
