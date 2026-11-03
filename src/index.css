@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
+
+  /* Emil Kowalski / Apple-grade Easing curves */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 body {
@@ -11,4 +16,74 @@ body {
   min-height: 100vh;
   background-color: #f8fafc;
   color: #0f172a;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings with tight optical tracking and balanced wrap */
+h1, h2, h3, h4 {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/* Tabular numbers to prevent jitter on changing metrics / counters */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tactile button press feedback: buttons feel responsive and physical */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+.btn-press {
+  transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, opacity 150ms ease, box-shadow 150ms ease;
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]),
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Modals entering smoothly from scale(0.96) - never scale(0) */
+@keyframes modalBackdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalContentZoom {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-backdrop {
+  animation: modalBackdropFade 200ms var(--ease-out) forwards;
+}
+
+.modal-surface {
+  transform-origin: center;
+  animation: modalContentZoom 220ms var(--ease-out) forwards;
+}
+
+/* Apple-style Translucent materials */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

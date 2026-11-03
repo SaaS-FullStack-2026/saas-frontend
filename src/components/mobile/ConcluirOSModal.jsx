@@ -36,31 +36,33 @@ export default function ConcluirOSModal({ os, isOpen, onClose, onConcluir, salva
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-0 sm:p-4">
-      <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-md p-0 sm:p-4 modal-backdrop">
+      <div className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col max-h-[92vh] modal-surface">
         {/* Cabeçalho */}
-        <div className="p-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <ClipboardCheck size={20} className="text-emerald-400" />
+        <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between shrink-0 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+              <ClipboardCheck size={20} />
+            </div>
             <div>
-              <h3 className="font-bold text-sm tracking-tight">Conclusão de Atendimento</h3>
-              <p className="text-2xs text-slate-400">O.S. #{os.id} — {os.titulo}</p>
+              <h3 className="font-bold text-sm sm:text-base tracking-tight">Conclusão de Atendimento</h3>
+              <p className="text-2xs text-slate-400 tabular-nums">O.S. #{os.id} — {os.titulo}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={salvando}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="btn-press p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Formulário com Scroll */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1 text-slate-800">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 text-slate-800 text-xs sm:text-sm">
           {/* Cliente Info */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs space-y-0.5">
             <span className="font-semibold text-slate-700 block">Ponto de Atendimento:</span>
             <span className="text-slate-600 block">{os.cliente?.nome || 'Cliente não informado'}</span>
           </div>
@@ -70,7 +72,7 @@ export default function ConcluirOSModal({ os, isOpen, onClose, onConcluir, salva
             <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
               <ClipboardCheck size={14} className="text-blue-600" /> Checklist de Qualidade (Obrigatório)
             </label>
-            <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80">
               <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -113,7 +115,7 @@ export default function ConcluirOSModal({ os, isOpen, onClose, onConcluir, salva
               value={laudoTecnico}
               onChange={(e) => setLaudoTecnico(e.target.value)}
               placeholder="Descreva as causas identificadas, peças trocadas e o procedimento executado..."
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none"
+              className="w-full text-xs p-3.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none resize-none bg-slate-50/70 focus:bg-white transition-all placeholder:text-slate-400"
             />
           </div>
 
@@ -126,23 +128,23 @@ export default function ConcluirOSModal({ os, isOpen, onClose, onConcluir, salva
           </div>
 
           {/* Botões de Ação */}
-          <div className="pt-2 flex items-center gap-2">
+          <div className="pt-2 flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
               disabled={salvando}
-              className="w-1/3 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer text-center"
+              className="btn-press w-1/3 py-2.5 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer text-center"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando || !todosChecados}
-              className="w-2/3 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              className="btn-press w-2/3 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:bg-slate-300 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
             >
               {salvando ? (
                 <>
-                  <Loader2 size={15} className="animate-spin" />
+                  <Loader2 size={15} className="animate-spin text-white" />
                   <span>Finalizando O.S...</span>
                 </>
               ) : (

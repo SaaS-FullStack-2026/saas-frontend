@@ -19,14 +19,13 @@ import {
   Code2,
   Server,
   Database,
-  Lock,
   ChevronRight,
   Sparkles,
   Users,
   Building2,
   Wrench,
-  PenTool,
-  Check
+  Check,
+  Copy
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -65,7 +64,7 @@ export default function LandingPage() {
       destaques: [
         'Indicadores de SLA, CSAT e Pontualidade em tempo real',
         'Detecção imediata de ordens com risco de atraso viário',
-        'Visão em tempo real do status de cada técnico em campo',
+        'Visão instantânea do status de cada técnico em campo',
         'Atalhos operacionais com abertura rápida de novas O.S.'
       ],
       previewStats: [
@@ -100,7 +99,7 @@ export default function LandingPage() {
       desc: 'Cronograma horizontal dinâmico das 07:00 às 20:00 por colaborador, com alertas visuais de trânsito e rebalanceamento inteligente por proximidade.',
       destaques: [
         'Visualização temporal contínua da jornada de cada técnico',
-        'Identificação em vermelho de atrasos e sobreposições',
+        'Identificação imediata de atrasos e sobreposições',
         'Sugestão de colaborador mais próximo via fórmula Haversine',
         'Reatribuição e reagendamento inteligente com 1 clique'
       ],
@@ -170,16 +169,16 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
-      {/* 1. NAVBAR FIXA */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
+      {/* 1. NAVBAR FIXA COM MATERIAL TRANSLÚCIDO APPLE-GRADE */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/" className="flex items-center gap-2.5 group btn-press">
             <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Layers size={20} />
+              <Layers size={19} />
             </div>
             <div>
-              <span className="font-extrabold text-lg tracking-tight text-white block">FieldOps</span>
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-white block">FieldOps</span>
               <span className="text-[10px] text-blue-400 font-semibold tracking-wider block -mt-1 uppercase">SaaS Gestão em Campo</span>
             </div>
           </Link>
@@ -208,7 +207,7 @@ export default function LandingPage() {
               href="https://github.com/SaaS-FullStack-2026"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors hidden sm:block"
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors hidden sm:block btn-press"
               title="Ver código no GitHub"
             >
               <Code2 size={16} />
@@ -218,7 +217,7 @@ export default function LandingPage() {
             {isLogged ? (
               <button
                 onClick={() => navigate('/dashboard')}
-                className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                className="btn-press inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 cursor-pointer"
               >
                 <span>Acessar Dashboard</span>
                 <ArrowRight size={15} />
@@ -226,7 +225,7 @@ export default function LandingPage() {
             ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                className="btn-press inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 cursor-pointer"
               >
                 <span>Entrar no Sistema</span>
                 <ArrowRight size={15} />
@@ -236,37 +235,37 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* 2. HERO SECTION */}
+      {/* 2. HERO SECTION COM CONTROLE DE LINHA E TIPOGRAFIA BALANCEADA */}
       <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28">
-        {/* Glow de fundo */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-blue-600/15 via-indigo-600/15 to-purple-600/10 blur-[130px] pointer-events-none -z-10" />
+        {/* Glow sutil em camadas */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[360px] bg-gradient-to-tr from-blue-600/15 via-indigo-600/15 to-purple-600/10 blur-[130px] pointer-events-none -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Tag Acadêmica */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20 text-blue-300 shadow-inner">
+            {/* Tag Acadêmica com Glassmorphism */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-300 shadow-inner">
               <Sparkles size={14} className="text-amber-400" />
               <span>Projeto de Conclusão de Curso 2026 • Full Stack SaaS</span>
             </div>
 
-            {/* Headline Principal */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12]">
+            {/* Headline com Tracking Estrito */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-[-0.03em] leading-[1.12]">
               A Revolução na Gestão e Despacho de{' '}
               <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
                 Serviços em Campo
               </span>
             </h1>
 
-            {/* Subtítulo */}
-            <p className="text-sm sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            {/* Subtítulo com Line-capping de ~58ch para leitura confortável */}
+            <p className="text-sm sm:text-lg text-slate-300 max-w-[58ch] mx-auto leading-relaxed">
               Elimine o caos de planilhas e mensagens de WhatsApp. Conecte despachantes a colaboradores em trânsito com cálculo de rotas Haversine, telemetria em tempo real, assinatura digital na tela e simulação 24h.
             </p>
 
-            {/* CTAs */}
+            {/* CTAs com Feedback Tátil */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <button
                 onClick={() => navigate('/login')}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-xl shadow-blue-600/25 transition-all text-sm cursor-pointer group"
+                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-xl shadow-blue-600/25 text-sm cursor-pointer group"
               >
                 <Zap size={18} className="text-amber-300 group-hover:scale-110 transition-transform" />
                 <span>Testar Demonstração ao Vivo</span>
@@ -277,7 +276,7 @@ export default function LandingPage() {
                 href="https://apifieldopss.up.railway.app/swagger-ui/index.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold px-5 py-3.5 rounded-xl border border-slate-800 transition-colors text-sm shadow-sm"
+                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold px-5 py-3.5 rounded-xl border border-slate-800 text-sm shadow-xs"
               >
                 <Server size={17} className="text-emerald-400" />
                 <span>Documentação Swagger (API)</span>
@@ -286,7 +285,7 @@ export default function LandingPage() {
 
               <a
                 href="#banca"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 font-semibold px-4 py-3.5 rounded-xl border border-slate-800/60 transition-colors text-sm"
+                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 font-semibold px-4 py-3.5 rounded-xl border border-slate-800/60 text-sm"
               >
                 <span>Guia da Banca</span>
               </a>
@@ -306,10 +305,10 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* PREVIEW DO COCKPIT EM MOCKUP */}
-          <div className="mt-14 max-w-5xl mx-auto rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 p-2 sm:p-3 border border-slate-800 shadow-2xl shadow-blue-950/40 relative">
+          {/* PREVIEW DO COCKPIT EM MOCKUP DE ALTA FIDELIDADE */}
+          <div className="mt-14 max-w-5xl mx-auto rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 p-2 sm:p-3 border border-slate-800/90 shadow-2xl shadow-blue-950/40 relative ring-1 ring-white/5">
             {/* Header da Janela */}
-            <div className="h-8 bg-slate-900/90 rounded-t-xl px-4 flex items-center justify-between border-b border-slate-800 text-xs text-slate-400">
+            <div className="h-9 bg-slate-900/90 rounded-t-xl px-4 flex items-center justify-between border-b border-slate-800 text-xs text-slate-400">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
@@ -326,19 +325,19 @@ export default function LandingPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Pontualidade (BI)</span>
-                  <span className="text-xl sm:text-2xl font-black text-blue-400 block mt-0.5">98.4%</span>
-                  <span className="text-[10px] text-emerald-400 flex items-center gap-0.5 mt-0.5">
+                  <span className="text-xl sm:text-2xl font-black text-blue-400 block mt-0.5 tabular-nums">98.4%</span>
+                  <span className="text-[10px] text-emerald-400 flex items-center gap-0.5 mt-0.5 tabular-nums">
                     <TrendingUp size={11} /> +4.2% vs mês anterior
                   </span>
                 </div>
                 <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Satisfação CSAT</span>
-                  <span className="text-xl sm:text-2xl font-black text-amber-400 block mt-0.5">4.9 ⭐</span>
+                  <span className="text-xl sm:text-2xl font-black text-amber-400 block mt-0.5 tabular-nums">4.9 ⭐</span>
                   <span className="text-[10px] text-slate-400 block mt-0.5">Avaliações dos clientes</span>
                 </div>
                 <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Em Campo Agora</span>
-                  <span className="text-xl sm:text-2xl font-black text-emerald-400 block mt-0.5">5 Técnicos</span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-400 block mt-0.5 tabular-nums">5 Técnicos</span>
                   <span className="text-[10px] text-emerald-400/80 block mt-0.5">São Paulo (SP)</span>
                 </div>
                 <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
@@ -348,7 +347,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Linha Simulada de Chamados em Campo */}
+              {/* Linha Simulada de Chamados em Campo com Feedback Físico */}
               <div className="p-3.5 bg-slate-900/50 border border-slate-800/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg shrink-0">
@@ -361,7 +360,7 @@ export default function LandingPage() {
                         Em Trânsito
                       </span>
                     </div>
-                    <p className="text-2xs text-slate-400 mt-0.5">
+                    <p className="text-2xs text-slate-400 mt-0.5 tabular-nums">
                       Técnico: Felipe Rocha • Distância calculada: 1.5 km • Tempo est.: 10 min
                     </p>
                   </div>
@@ -369,7 +368,7 @@ export default function LandingPage() {
 
                 <button
                   onClick={() => navigate('/login')}
-                  className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-xs font-semibold transition-colors cursor-pointer self-end sm:self-auto"
+                  className="btn-press px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-xs font-semibold cursor-pointer self-end sm:self-auto"
                 >
                   Ver no Mapa ➔
                 </button>
@@ -379,17 +378,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3. BARRA DE MÉTRICAS & VALOR DE MERCADO */}
+      {/* 3. BARRA DE MÉTRICAS & VALOR DE MERCADO COM NÚMEROS TABULARES */}
       <section id="solucao" className="border-y border-slate-800/80 bg-slate-900/40 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
             <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-blue-400 block">-40%</span>
+              <span className="text-2xl sm:text-4xl font-extrabold text-blue-400 block tabular-nums">-40%</span>
               <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Tempo em Trânsito</span>
               <span className="text-2xs text-slate-500 block mt-0.5">Despacho por proximidade Haversine</span>
             </div>
             <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-emerald-400 block">100%</span>
+              <span className="text-2xl sm:text-4xl font-extrabold text-emerald-400 block tabular-nums">100%</span>
               <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Auditoria Imutável</span>
               <span className="text-2xs text-slate-500 block mt-0.5">Check-in, check-out e laudo digital</span>
             </div>
@@ -399,7 +398,7 @@ export default function LandingPage() {
               <span className="text-2xs text-slate-500 block mt-0.5">Roteiro encadeado do dia no mobile</span>
             </div>
             <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-amber-400 block">4.9/5.0</span>
+              <span className="text-2xl sm:text-4xl font-extrabold text-amber-400 block tabular-nums">4.9/5.0</span>
               <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Satisfação dos Clientes</span>
               <span className="text-2xs text-slate-500 block mt-0.5">Pesquisa CSAT instantânea via link</span>
             </div>
@@ -407,43 +406,45 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. SHOWCASE DE MÓDULOS (ABAS INTERATIVAS) */}
+      {/* 4. SHOWCASE DE MÓDULOS (SEGMENTED CONTROL NO ESTILO EMIL KOWALSKI) */}
       <section id="modulos" className="py-20 lg:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
             <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Ecossistema Completo</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
               Uma Plataforma, Todos os Ângulos da Operação
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400 max-w-[55ch] mx-auto leading-relaxed">
               Do planejamento na base à execução na ponta, o FieldOps integra despachantes, técnicos e o cliente final em uma única experiência fluida.
             </p>
           </div>
 
-          {/* Abas dos Módulos */}
-          <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-4 no-scrollbar">
-            {modulos.map((m) => {
-              const Icon = m.icon;
-              const isSelected = m.id === activeTab;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setActiveTab(m.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                    isSelected
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span>{m.titulo}</span>
-                </button>
-              );
-            })}
+          {/* Segmented Control Unificado */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 inline-flex flex-wrap gap-1 shadow-inner">
+              {modulos.map((m) => {
+                const Icon = m.icon;
+                const isSelected = m.id === activeTab;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setActiveTab(m.id)}
+                    className={`btn-press inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/10'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Icon size={15} />
+                    <span>{m.titulo}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Card Detalhado do Módulo Ativo */}
-          <div className="mt-6 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 sm:p-10">
+          {/* Card Detalhado do Módulo Ativo com Transição Suave */}
+          <div className="bg-slate-900/60 border border-slate-800/90 rounded-3xl p-6 sm:p-10 shadow-xl ring-1 ring-white/5 transition-opacity duration-200 ease-out">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               {/* Esquerda: Explicação */}
               <div className="lg:col-span-7 space-y-5">
@@ -455,7 +456,7 @@ export default function LandingPage() {
                   {moduloAtivo.titulo}
                 </h3>
 
-                <p className="text-sm text-slate-300 leading-relaxed">
+                <p className="text-sm text-slate-300 leading-relaxed max-w-[60ch]">
                   {moduloAtivo.desc}
                 </p>
 
@@ -473,7 +474,7 @@ export default function LandingPage() {
                 <div className="pt-4 flex items-center gap-3">
                   <button
                     onClick={() => navigate('/login')}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+                    className="btn-press inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
                   >
                     <span>Experimentar na Demonstração</span>
                     <ArrowRight size={14} />
@@ -496,7 +497,7 @@ export default function LandingPage() {
                   {moduloAtivo.previewStats.map((st, sIdx) => (
                     <div key={sIdx} className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
                       <span className="text-xs text-slate-400 font-medium">{st.label}</span>
-                      <span className={`text-sm font-bold font-mono ${st.cor}`}>{st.val}</span>
+                      <span className={`text-sm font-bold font-mono tabular-nums ${st.cor}`}>{st.val}</span>
                     </div>
                   ))}
                 </div>
@@ -515,10 +516,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
             <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Governança & SLA</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
               Máquina de Estados Finita e Auditável
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400 max-w-[60ch] mx-auto leading-relaxed">
               Cada transição de estado é validada estritamente pelo backend Spring Boot, impedindo pulos de etapa e garantindo rastreabilidade jurídica com data, hora e responsável.
             </p>
           </div>
@@ -536,7 +537,7 @@ export default function LandingPage() {
                   <span className="text-xs font-bold text-white block">{st.passo}</span>
                   <p className="text-2xs text-slate-400 leading-relaxed">{st.desc}</p>
                 </div>
-                <span className="text-[10px] font-mono text-slate-500 font-semibold block">Passo 0{idx + 1}</span>
+                <span className="text-[10px] font-mono text-slate-500 font-semibold block tabular-nums">Passo 0{idx + 1}</span>
               </div>
             ))}
           </div>
@@ -548,17 +549,17 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-14">
             <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Engenharia de Software</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
               Stack Tecnológica & Padrões Arquiteturais
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400 max-w-[55ch] mx-auto leading-relaxed">
               Construído com base nas melhores práticas do mercado para garantir estabilidade, segurança e facilidade de implantação.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Backend */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4">
+            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-blue-500/25 transition-all">
               <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl w-fit">
                 <Server size={22} />
               </div>
@@ -574,7 +575,7 @@ export default function LandingPage() {
             </div>
 
             {/* Frontend */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4">
+            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-indigo-500/25 transition-all">
               <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl w-fit">
                 <Code2 size={22} />
               </div>
@@ -590,7 +591,7 @@ export default function LandingPage() {
             </div>
 
             {/* DevOps & Banco */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4">
+            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-emerald-500/25 transition-all">
               <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl w-fit">
                 <Database size={22} />
               </div>
@@ -611,7 +612,7 @@ export default function LandingPage() {
       {/* 7. GUIA DA BANCA AVALIADORA (CREDENCIAIS & ACESSO RÁPIDO) */}
       <section id="banca" className="border-t border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-slate-950 py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-tr from-slate-900 via-slate-900 to-blue-950/40 border border-blue-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+          <div className="bg-gradient-to-tr from-slate-900 via-slate-900 to-blue-950/40 border border-blue-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden ring-1 ring-white/5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-3 max-w-xl">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -629,7 +630,7 @@ export default function LandingPage() {
               <div className="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2.5">
                 <button
                   onClick={() => navigate('/login')}
-                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-5 py-3 rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                  className="btn-press inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-5 py-3 rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-500/20 cursor-pointer"
                 >
                   <Zap size={16} />
                   <span>Ir para Tela de Login</span>
@@ -639,7 +640,7 @@ export default function LandingPage() {
                   href="https://apifieldopss.up.railway.app/swagger-ui/index.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2.5 rounded-xl text-xs transition-colors border border-slate-700"
+                  className="btn-press inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2.5 rounded-xl text-xs transition-colors border border-slate-700"
                 >
                   <Server size={15} />
                   <span>Abrir Swagger UI</span>
@@ -655,9 +656,9 @@ export default function LandingPage() {
                   <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Acesso Gestor (Admin)</span>
                   <button
                     onClick={() => copiarTexto('gestor@fieldops.com', 'gestor')}
-                    className="text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                    className="btn-press text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-1 rounded-md border border-slate-800"
                   >
-                    {copiedGestor ? <Check size={12} className="text-emerald-400" /> : null}
+                    {copiedGestor ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{copiedGestor ? 'Copiado!' : 'Copiar E-mail'}</span>
                   </button>
                 </div>
@@ -676,9 +677,9 @@ export default function LandingPage() {
                   <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Acesso Técnico (Mobile)</span>
                   <button
                     onClick={() => copiarTexto('tecnico@fieldops.com', 'tecnico')}
-                    className="text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                    className="btn-press text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-1 rounded-md border border-slate-800"
                   >
-                    {copiedTecnico ? <Check size={12} className="text-emerald-400" /> : null}
+                    {copiedTecnico ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                     <span>{copiedTecnico ? 'Copiado!' : 'Copiar E-mail'}</span>
                   </button>
                 </div>
