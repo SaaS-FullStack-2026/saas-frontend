@@ -12,7 +12,6 @@ import {
   User, 
   Building2, 
   Truck, 
-  CheckCircle2, 
   AlertTriangle,
   MapPin,
   GripVertical, 
@@ -22,7 +21,7 @@ import {
   X,
   Loader2,
   ThumbsUp,
-  Navigation
+  Compass
 } from 'lucide-react';
 
 const HORA_INICIAL_TIMELINE = 0; // 00:00 (Meia-noite)
@@ -44,7 +43,6 @@ function calcularAtraso(os) {
   const agora = new Date();
   const dataAg = new Date(os.dataAgendamento);
 
-  // Apenas considera atraso no dia de hoje ou em datas passadas
   const pad = (n) => String(n).padStart(2, '0');
   const dataAgStr = `${dataAg.getFullYear()}-${pad(dataAg.getMonth() + 1)}-${pad(dataAg.getDate())}`;
   const hojeStr = obterDataLocalHoje();
@@ -55,7 +53,6 @@ function calcularAtraso(os) {
   const deslocamentoMinutos = os.tempoDeslocamentoMinutos || 30;
   const horaSaidaPrevista = new Date(dataAg.getTime() - deslocamentoMinutos * 60000);
 
-  // 1. Já passou do momento previsto para iniciar o trânsito/deslocamento e o técnico ainda não saiu
   if (agora > horaSaidaPrevista && (os.status === 'ABERTA' || os.status === 'ATRIBUIDA')) {
     const minutos = Math.max(1, Math.round((agora - horaSaidaPrevista) / 60000));
     return {
@@ -66,7 +63,6 @@ function calcularAtraso(os) {
     };
   }
 
-  // 2. Já passou da hora agendada de atendimento e ainda não está em atendimento no cliente
   if (agora > dataAg && os.status !== 'EM_ATENDIMENTO') {
     const minutos = Math.max(1, Math.round((agora - dataAg) / 60000));
     return {
@@ -81,11 +77,11 @@ function calcularAtraso(os) {
 }
 
 function obterInfoAtivo(os) {
-  if (os.equipamento) {
+  if (os?.equipamento) {
     const cat = getCategoriaInfo(os.equipamento.categoria);
     return { emoji: cat.emoji, nome: os.equipamento.nome, cor: cat.cor };
   }
-  const t = ((os.titulo || '') + ' ' + (os.descricao || '')).toLowerCase();
+  const t = ((os?.titulo || '') + ' ' + (os?.descricao || '')).toLowerCase();
   if (t.includes('ar') || t.includes('split') || t.includes('clima')) {
     return { emoji: '❄️', nome: 'Climatização', cor: 'text-cyan-700 bg-cyan-50 border-cyan-200' };
   }
@@ -109,7 +105,6 @@ function obterLocalizacaoAtualColaborador(tecnicoId, ordensDoDia) {
     .filter((o) => o.agente?.id === tecnicoId)
     .sort((a, b) => new Date(a.dataAgendamento) - new Date(b.dataAgendamento));
 
-  // 1. Em atendimento ou em deslocamento
   const emAndamento = ordensTecnico.find((o) => o.status === 'EM_ATENDIMENTO' || o.status === 'EM_DESLOCAMENTO');
   if (emAndamento) {
     const cli = emAndamento.cliente?.nome || 'Cliente';
@@ -128,7 +123,6 @@ function obterLocalizacaoAtualColaborador(tecnicoId, ordensDoDia) {
     };
   }
 
-  // 2. Última OS concluída hoje
   const concluidas = ordensTecnico.filter((o) => o.status === 'CONCLUIDA');
   if (concluidas.length > 0) {
     const ultima = concluidas[concluidas.length - 1];
@@ -141,7 +135,6 @@ function obterLocalizacaoAtualColaborador(tecnicoId, ordensDoDia) {
     };
   }
 
-  // 3. Sem atividades iniciadas hoje -> Sede / Base
   return {
     tipo: 'SEDE',
     texto: 'Prefeitura de SP (Sede / Base)',
@@ -164,7 +157,7 @@ export default function LinhaDoTempoPage() {
 
   // Drag and Drop & Interações
   const [draggedOS, setDraggedOS] = useState(null);
-  const [dragOverTarget, setDragOverTarget] = useState(null); // { tecnicoId, hora }
+  const [dragOverTarget, setDragOverTarget] = useState(null);
   const [osSelecionada, setOsSelecionada] = useState(null);
   const [feedbackRecalculo, setFeedbackRecalculo] = useState(null);
   const [exibirFilaEspera, setExibirFilaEspera] = useState(true);
@@ -181,9 +174,9 @@ export default function LinhaDoTempoPage() {
       setCarregando(true);
       setErro(null);
       const [resUsuarios, resOrdens, resBI] = await Promise.all([
-        api.get('/usuarios'),
-        api.get('/ordens-servico'),
-        api.get('/ordens-servico/bi-metricas').catch(() => ({ data: null }))
+        api.get('/usuarios', { timeout: 8000 }),
+        api.get('/ordens-servico', { timeout: 8000 }),
+        api.get('/ordens-servico/bi-metricas', { timeout: 8000 }).catch(() => ({ data: null }))
       ]);
 
       const apenasAgentes = (resUsuarios.data || []).filter(
@@ -196,7 +189,7 @@ export default function LinhaDoTempoPage() {
       }
     } catch (err) {
       console.error('Erro ao carregar linha do tempo:', err);
-      setErro('Não foi possível carregar a agenda e colaboradores. Verifique a conexão.');
+      setErro('Não foi possível carregar a agenda e colaboradores. Verifique a conexão com o servidor.');
     } finally {
       setCarregando(false);
     }
@@ -206,7 +199,6 @@ export default function LinhaDoTempoPage() {
     carregarDados();
   }, []);
 
-  // Navegação de Datas
   const mudarDataRelativa = (dias) => {
     const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
     const d = new Date(ano, mes - 1, dia + dias, 12, 0, 0);
@@ -218,7 +210,6 @@ export default function LinhaDoTempoPage() {
     setDataSelecionada(obterDataLocalHoje());
   };
 
-  // Separação de Ordens: do Dia vs Fila de Espera (Sem Técnico)
   const ordensDoDia = useMemo(() => {
     return ordens.filter((o) => {
       if (!o.dataAgendamento) return false;
@@ -237,7 +228,6 @@ export default function LinhaDoTempoPage() {
     return ordens.filter((o) => !o.agente || o.status === 'ABERTA');
   }, [ordens]);
 
-  // Manipulação de Drag and Drop
   const handleDragStart = (e, os) => {
     setDraggedOS(os);
     e.dataTransfer.setData('text/plain', String(os.id));
@@ -263,12 +253,10 @@ export default function LinhaDoTempoPage() {
     if (!draggedOS) return;
 
     try {
-      // Monta data exata no fuso local e converte para ISO completo
       const [ano, mes, dia] = dataSelecionada.split('-').map(Number);
       const dataObj = new Date(ano, mes - 1, dia, hora, 0, 0);
       const dataIso = dataObj.toISOString();
 
-      // Chamada à API com recálculo inteligente no backend e registro de auditoria
       const res = await api.patch(`/ordens-servico/${draggedOS.id}/reagendar`, {
         agenteId: tecnicoId,
         dataAgendamento: dataIso,
@@ -283,14 +271,12 @@ export default function LinhaDoTempoPage() {
         minute: '2-digit'
       });
 
-      // Feedback de recálculo inteligente
       setFeedbackRecalculo({
         titulo: `OS #${osAtualizada.id} Reagendada com Sucesso!`,
-        mensagem: `Alocada para ${osAtualizada.agente?.nome} às ${horaEfetiva} com buffer de deslocamento recalculado.`
+        mensagem: `Alocada para ${osAtualizada.agente?.nome || 'Técnico'} às ${horaEfetiva} com buffer de deslocamento recalculado.`
       });
       setTimeout(() => setFeedbackRecalculo(null), 5000);
 
-      // Atualiza estado local e métricas
       setOrdens((prev) => prev.map((o) => (o.id === osAtualizada.id ? osAtualizada : o)));
       api.get('/ordens-servico/bi-metricas').then((resBI) => {
         if (resBI.data) setMetricasBI(resBI.data);
@@ -303,7 +289,6 @@ export default function LinhaDoTempoPage() {
     }
   };
 
-  // Funções para Sugestão de Técnicos por Proximidade
   const abrirSugestoesParaOS = async (os, e) => {
     if (e) e.stopPropagation();
     try {
@@ -335,7 +320,7 @@ export default function LinhaDoTempoPage() {
       const osAtualizada = res.data;
       setFeedbackRecalculo({
         titulo: `OS #${osAtualizada.id} reatribuída para ${sugestao.nome}!`,
-        mensagem: `Distância estimada: ${sugestao.distanciaKm != null ? sugestao.distanciaKm.toFixed(1) + ' km' : 'N/D'} • Trânsito: ${sugestao.tempoDeslocamentoMinutos} min.`
+        mensagem: `Distância estimada: ${sugestao.distanciaKm != null ? sugestao.distanciaKm.toFixed(1) + ' km' : 'N/D'} | Trânsito: ${sugestao.tempoDeslocamentoMinutos} min.`
       });
       setTimeout(() => setFeedbackRecalculo(null), 5000);
       setSugestaoModalOS(null);
@@ -348,7 +333,6 @@ export default function LinhaDoTempoPage() {
     }
   };
 
-  // Posição da "Linha do Agora" (se a data selecionada for hoje)
   const isHoje = dataSelecionada === obterDataLocalHoje();
   const agora = new Date();
   const horaAgoraFloat = agora.getHours() + agora.getMinutes() / 60;
@@ -398,15 +382,13 @@ export default function LinhaDoTempoPage() {
             </button>
           </div>
 
-          {/* Seletor Nativo de Data */}
           <input
             type="date"
             value={dataSelecionada}
             onChange={(e) => setDataSelecionada(e.target.value)}
-            className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium cursor-pointer"
+            className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 shadow-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
           />
 
-          {/* Alerta de Ordens em Atraso Hoje */}
           {ordensAtrasadasHoje.length > 0 && (
             <div 
               title={`${ordensAtrasadasHoje.length} ordens com deslocamento ou atendimento atrasado hoje`}
@@ -432,7 +414,7 @@ export default function LinhaDoTempoPage() {
           <button
             onClick={carregarDados}
             disabled={carregando}
-            className="p-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 shadow-xs cursor-pointer transition-all"
+            className="p-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 shadow-xs cursor-pointer transition-all disabled:opacity-60 active:scale-95"
             title="Atualizar dados"
           >
             <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -440,7 +422,23 @@ export default function LinhaDoTempoPage() {
         </div>
       </div>
 
-      {/* Cards de Métricas Operacionais & BI (Auditoria de Reagendamentos & Atrasos) */}
+      {/* Alerta de Erro da API */}
+      {erro && (
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="shrink-0 text-rose-600" />
+            <span className="font-medium">{erro}</span>
+          </div>
+          <button
+            onClick={carregarDados}
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition-colors"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {/* Cards de Métricas Operacionais & BI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-2xs flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
@@ -449,7 +447,7 @@ export default function LinhaDoTempoPage() {
           <div className="truncate">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total de OS</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold text-slate-900">{metricasBI.totalOrdens ?? ordens.length}</span>
+              <span className="text-lg font-bold text-slate-900">{carregando ? '...' : (metricasBI.totalOrdens ?? ordens.length)}</span>
               <span className="text-[10px] text-slate-400">chamados</span>
             </div>
           </div>
@@ -462,7 +460,7 @@ export default function LinhaDoTempoPage() {
           <div className="truncate">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Reagendamentos</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold text-purple-700">{metricasBI.totalReagendamentos ?? 0}</span>
+              <span className="text-lg font-bold text-purple-700">{carregando ? '...' : (metricasBI.totalReagendamentos ?? 0)}</span>
               <span className="text-[10px] text-purple-600/80 font-medium">auditados</span>
             </div>
           </div>
@@ -475,7 +473,7 @@ export default function LinhaDoTempoPage() {
           <div className="truncate">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Atrasos Operacionais</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold text-rose-700">{metricasBI.totalAtrasadas ?? ordensAtrasadasHoje.length}</span>
+              <span className="text-lg font-bold text-rose-700">{carregando ? '...' : (metricasBI.totalAtrasadas ?? ordensAtrasadasHoje.length)}</span>
               <span className="text-[10px] text-rose-600/80 font-medium">identificados</span>
             </div>
           </div>
@@ -489,7 +487,7 @@ export default function LinhaDoTempoPage() {
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Pontualidade (BI)</span>
             <div className="flex items-baseline gap-1.5">
               <span className="text-lg font-bold text-emerald-700">
-                {metricasBI.pontualidadePercentual != null ? metricasBI.pontualidadePercentual.toFixed(1) : '100'}%
+                {carregando ? '...' : `${metricasBI.pontualidadePercentual != null ? metricasBI.pontualidadePercentual.toFixed(1) : '100'}%`}
               </span>
               <span className="text-[10px] text-emerald-600/80 font-medium">no prazo</span>
             </div>
@@ -497,7 +495,7 @@ export default function LinhaDoTempoPage() {
         </div>
       </div>
 
-      {/* Alerta de Feedback de Recálculo Inteligente */}
+      {/* Feedback de Recálculo Inteligente */}
       {feedbackRecalculo && (
         <div className="p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-md flex items-center justify-between text-xs animate-in slide-in-from-top duration-200">
           <div className="flex items-center gap-2.5">
@@ -518,7 +516,7 @@ export default function LinhaDoTempoPage() {
         </div>
       )}
 
-      {/* Fila de Espera (Ordens sem Técnico para Despacho Rápido) */}
+      {/* Fila de Espera */}
       {exibirFilaEspera && (
         <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -526,7 +524,7 @@ export default function LinhaDoTempoPage() {
               <Layers size={15} className="text-amber-600" />
               <span>Fila de Espera • Ordens Aguardando Despacho ({ordensFilaEspera.length})</span>
             </div>
-            <span className="text-2xs text-amber-700 font-medium">
+            <span className="text-2xs text-amber-700 font-medium hidden sm:inline">
               Arraste um chamado para o horário desejado ou clique em Sugerir Técnico
             </span>
           </div>
@@ -564,7 +562,7 @@ export default function LinhaDoTempoPage() {
                       <button
                         type="button"
                         onClick={(e) => abrirSugestoesParaOS(o, e)}
-                        className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold transition-colors cursor-pointer active:scale-95"
                         title="Ver sugestão de técnicos mais próximos da área"
                       >
                         <Sparkles size={11} />
@@ -582,7 +580,7 @@ export default function LinhaDoTempoPage() {
         </div>
       )}
 
-      {/* Banner Informativo se o Dia Selecionado não tiver Ordens Agendadas */}
+      {/* Banner Informativo para Dia Sem Ordens */}
       {ordensDoDia.length === 0 && !carregando && (
         <div className="p-3.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in">
           <div className="flex items-center gap-2">
@@ -611,7 +609,7 @@ export default function LinhaDoTempoPage() {
 
       {/* Matriz Gantt / Linha do Tempo */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-        {/* Barra de Legenda & Status */}
+        {/* Barra de Legenda */}
         <div className="px-5 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50/70">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-2xs font-bold uppercase text-slate-400 tracking-wider">Status:</span>
@@ -619,7 +617,7 @@ export default function LinhaDoTempoPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600" /> Atribuída
             </span>
             <span className="inline-flex items-center gap-1.5 text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded font-medium text-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" /> Em Deslocamento (Trânsito)
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" /> Em Deslocamento
             </span>
             <span className="inline-flex items-center gap-1.5 text-purple-800 bg-purple-100 px-2 py-0.5 rounded font-medium text-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" /> Em Atendimento
@@ -631,21 +629,19 @@ export default function LinhaDoTempoPage() {
 
           <div className="flex items-center gap-2 text-2xs text-slate-500">
             <span className="inline-block w-4 h-2 rounded bg-amber-400/40 border border-amber-500 border-dashed" />
-            <span>Faixa de Deslocamento Pré-Atendimento (Passe o mouse no caminhão 🚗 para ver rota)</span>
+            <span>Deslocamento Pré-Atendimento (Hover no caminhão 🚗 para rota)</span>
           </div>
         </div>
 
-        {/* Scroll Horizontal da Matriz de Técnicos */}
+        {/* Scroll Horizontal da Matriz Gantt */}
         <div className="overflow-x-auto relative">
           <div style={{ minWidth: `${280 + HORAS_TIMELINE.length * LARGURA_HORA_PX}px` }}>
             {/* Header das Horas */}
             <div className="flex items-center border-b border-slate-200 bg-slate-100/70 font-semibold text-xs text-slate-600 sticky top-0 z-20">
-              {/* Coluna de Colaboradores */}
               <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider">
                 Colaboradores & Localização ({tecnicos.length})
               </div>
 
-              {/* Colunas das Horas */}
               <div className="flex-1 flex relative">
                 {HORAS_TIMELINE.map((hora) => (
                   <div
@@ -671,12 +667,33 @@ export default function LinhaDoTempoPage() {
               </div>
             )}
 
-            {/* Linhas de Cada Técnico */}
-            {tecnicos.length === 0 ? (
+            {/* Conteúdo da Grade ou Skeleton Loader */}
+            {carregando ? (
+              /* Skeleton Loader da Linha do Tempo */
+              <div className="divide-y divide-slate-100 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex min-h-[96px]">
+                    <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-50 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-200" />
+                        <div className="space-y-1 flex-1">
+                          <div className="h-3 bg-slate-200 rounded w-24" />
+                          <div className="h-2 bg-slate-200 rounded w-32" />
+                        </div>
+                      </div>
+                      <div className="h-5 bg-slate-200 rounded-lg w-full" />
+                    </div>
+                    <div className="flex-1 flex items-center p-3">
+                      <div className="h-14 bg-slate-100 rounded-xl w-3/4 border border-slate-200/50" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : tecnicos.length === 0 ? (
               <div className="p-12 text-center bg-white text-xs text-slate-500 space-y-2">
                 <User className="mx-auto text-slate-400" size={32} />
                 <p className="font-semibold text-slate-800 text-sm">Nenhum colaborador carregado</p>
-                <p className="text-slate-500">Cadastre técnicos de campo na página de Equipes ou clique no botão Atualizar.</p>
+                <p className="text-slate-500">Cadastre técnicos de campo no sistema ou clique em Atualizar.</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -694,22 +711,21 @@ export default function LinhaDoTempoPage() {
 
                   return (
                     <div key={tecnico.id} className="flex min-h-[96px] hover:bg-slate-50/50 transition-colors">
-                      {/* Painel Fixo do Técnico (Esquerda) com Localização Atual em Tempo Real */}
+                      {/* Painel Fixo do Técnico (Esquerda) */}
                       <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 flex flex-col justify-between bg-white z-10 shadow-xs">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
-                              {tecnico.nome.charAt(0).toUpperCase()}
+                              {(tecnico.nome || 'T').charAt(0).toUpperCase()}
                             </div>
                             <div className="truncate flex-1">
-                              <h4 className="text-xs font-bold text-slate-900 truncate">{tecnico.nome}</h4>
+                              <h4 className="text-xs font-bold text-slate-900 truncate">{tecnico.nome || 'Colaborador'}</h4>
                               <span className="text-[10px] text-slate-400 block truncate">
-                                {tecnico.email}
+                                {tecnico.email || 'agente@fieldops.com'}
                               </span>
                             </div>
                           </div>
 
-                          {/* Badge de Localização Atual do Colaborador */}
                           <div 
                             title={localizacaoTecnico.texto}
                             className={`px-2 py-1 rounded-lg border text-[10px] font-medium flex items-center gap-1.5 truncate ${localizacaoTecnico.cor}`}
@@ -729,9 +745,8 @@ export default function LinhaDoTempoPage() {
                         </div>
                       </div>
 
-                      {/* Área da Grade Horária (Gantt Drop Area) */}
+                      {/* Grade Horária (Gantt Drop Area) */}
                       <div className="flex-1 relative flex">
-                        {/* Células de Fundo para Drop */}
                         {HORAS_TIMELINE.map((hora) => {
                           const isHovered =
                             dragOverTarget?.tecnicoId === tecnico.id && dragOverTarget?.hora === hora;
@@ -763,7 +778,6 @@ export default function LinhaDoTempoPage() {
                           const duracaoMinutos = o.duracaoEstimadaMinutos || 60;
                           const deslocamentoMinutos = o.tempoDeslocamentoMinutos || 30;
 
-                          // Cálculos posicionais proporcionais em pixels
                           const offsetLeftPx = (horaInicioFloat - HORA_INICIAL_TIMELINE) * LARGURA_HORA_PX;
                           const widthPx = Math.max((duracaoMinutos / 60) * LARGURA_HORA_PX, 95);
 
@@ -777,7 +791,6 @@ export default function LinhaDoTempoPage() {
                           const horaSaidaPrevista = new Date(dataAg.getTime() - deslocamentoMinutos * 60000);
                           const horaSaidaPrevistaStr = horaSaidaPrevista.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-                          // Determina origem do deslocamento
                           const origemNome = idx > 0 
                             ? `${ordensTecnicoHoje[idx - 1].cliente?.nome || 'Cliente Anterior'} ${ordensTecnicoHoje[idx - 1].cliente?.bairro ? `(${ordensTecnicoHoje[idx - 1].cliente.bairro})` : ''}`
                             : 'Prefeitura de SP (Sede / Base Operacional)';
@@ -799,7 +812,7 @@ export default function LinhaDoTempoPage() {
 
                           return (
                             <div key={o.id}>
-                              {/* Faixa Visual de Deslocamento com Hover Card Logístico Detalhado */}
+                              {/* Faixa Visual de Deslocamento */}
                               {deslocamentoLeftPx >= 0 && (
                                 <div
                                   style={{
@@ -820,7 +833,7 @@ export default function LinhaDoTempoPage() {
                                     )}
                                   </div>
 
-                                  {/* Popover / Card Detalhado ao Passar o Mouse sobre o Caminhão */}
+                                  {/* Popover / Card Logístico ao Passar o Mouse */}
                                   <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white rounded-xl shadow-2xl z-50 pointer-events-none animate-in fade-in zoom-in-95 duration-150 border border-slate-700">
                                     <div className="flex items-center gap-1.5 font-bold text-amber-400 pb-1.5 border-b border-slate-800 text-xs">
                                       <Truck size={14} />
@@ -872,7 +885,7 @@ export default function LinhaDoTempoPage() {
                                 draggable="true"
                                 onDragStart={(e) => handleDragStart(e, o)}
                                 onClick={() => setOsSelecionada(o)}
-                                title={atraso.atrasada ? `${atraso.mensagem} • Clique para ver detalhes` : undefined}
+                                title={atraso.atrasada ? `${atraso.mensagem} | Clique para ver detalhes` : undefined}
                                 className={`absolute rounded-xl border p-2 shadow-xs hover:shadow-md cursor-grab active:cursor-grabbing transition-all z-20 flex flex-col justify-between overflow-hidden group ${corStatus}`}
                               >
                                 <div className="flex items-center justify-between gap-1 leading-tight">
@@ -889,7 +902,7 @@ export default function LinhaDoTempoPage() {
                                         type="button"
                                         onClick={(e) => abrirSugestoesParaOS(o, e)}
                                         title="Sugerir outro técnico próximo para evitar atraso"
-                                        className="p-0.5 text-slate-600 hover:text-indigo-600 bg-white/70 hover:bg-white rounded transition-colors cursor-pointer"
+                                        className="p-0.5 text-slate-600 hover:text-indigo-600 bg-white/70 hover:bg-white rounded transition-colors cursor-pointer active:scale-95"
                                       >
                                         <Sparkles size={10} />
                                       </button>
@@ -904,7 +917,7 @@ export default function LinhaDoTempoPage() {
                                         type="button"
                                         onClick={(e) => abrirSugestoesParaOS(o, e)}
                                         title="Sugerir técnicos mais próximos da área"
-                                        className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-indigo-600 rounded transition-opacity cursor-pointer"
+                                        className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-indigo-600 rounded transition-opacity cursor-pointer active:scale-95"
                                       >
                                         <Sparkles size={10} />
                                       </button>
@@ -917,7 +930,7 @@ export default function LinhaDoTempoPage() {
                                 </p>
 
                                 <div className="flex items-center justify-between text-[10px] text-slate-600 font-medium pt-0.5 border-t border-slate-200/60">
-                                  <span className="truncate max-w-[80px]">{o.cliente?.nome}</span>
+                                  <span className="truncate max-w-[80px]">{o.cliente?.nome || 'Cliente'}</span>
                                   <span className="font-mono font-semibold text-slate-800 shrink-0">
                                     {horaInicioStr}-{horaFimStr}
                                   </span>
@@ -949,7 +962,7 @@ export default function LinhaDoTempoPage() {
                 <div>
                   <h3 className="text-sm font-bold">Sugestão de Técnicos por Proximidade</h3>
                   <p className="text-2xs text-slate-400">
-                    O.S. #{sugestaoModalOS.id} • Cliente: {sugestaoModalOS.cliente?.nome || 'N/D'}
+                    O.S. #{sugestaoModalOS.id} | Cliente: {sugestaoModalOS.cliente?.nome || 'N/D'}
                   </p>
                 </div>
               </div>
@@ -1053,7 +1066,7 @@ export default function LinhaDoTempoPage() {
                             type="button"
                             disabled={salvandoReatribuicao || isAtual}
                             onClick={() => reatribuirParaTecnico(s)}
-                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-2xs ${
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-2xs active:scale-95 ${
                               isAtual
                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                                 : s.recomendado
@@ -1085,7 +1098,7 @@ export default function LinhaDoTempoPage() {
         </div>
       )}
 
-      {/* Modal Administrativo Completo de Detalhes da OS */}
+      {/* Modal Completo de Detalhes da OS */}
       <DetalhesOSModal
         os={osSelecionada}
         isOpen={Boolean(osSelecionada)}

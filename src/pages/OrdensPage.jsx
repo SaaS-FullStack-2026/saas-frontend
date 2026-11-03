@@ -194,8 +194,8 @@ export default function OrdensPage() {
           <button
             onClick={carregarOrdens}
             disabled={carregando}
-            className={`inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-lg text-xs sm:text-sm shadow-xs transition-all ${
-              carregando ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer active:scale-95'
+            className={`btn-press inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs ${
+              carregando ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
             }`}
           >
             <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -203,7 +203,7 @@ export default function OrdensPage() {
           </button>
           <button
             onClick={() => setModalNovaAberto(true)}
-            className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs sm:text-sm shadow-xs transition-all cursor-pointer active:scale-95"
+            className="btn-press flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-xs cursor-pointer"
           >
             <Plus size={16} />
             <span>Nova Ordem</span>
@@ -240,10 +240,10 @@ export default function OrdensPage() {
           />
         </div>
         <div className="text-xs text-slate-500 flex items-center gap-3">
-          <span>Total: <strong>{ordensFiltradas.length}</strong> ordens</span>
+          <span>Total: <strong className="tabular-nums">{ordensFiltradas.length}</strong> ordens</span>
           <span className="text-slate-300">|</span>
           <span className="text-emerald-600 font-medium">
-            {ordensFiltradas.filter((o) => o.status === 'CONCLUIDA').length} concluídas
+            <span className="tabular-nums font-bold">{ordensFiltradas.filter((o) => o.status === 'CONCLUIDA').length}</span> concluídas
           </span>
         </div>
       </div>

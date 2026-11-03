@@ -13,22 +13,16 @@ import {
   Building2, 
   User, 
   Clock, 
-  PenTool, 
-  FileText, 
   Eye, 
-  Filter,
   Navigation,
   AlertCircle,
   Share2,
   Check,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Route as RouteIcon,
-  Truck,
   Home,
   X,
-  Sparkles,
   Compass
 } from 'lucide-react';
 
@@ -46,38 +40,38 @@ function obterDataLocalHoje() {
 const STATUS_CONFIG = {
   ABERTA: {
     label: 'Aberta',
-    cor: '#d97706', // amber-600
+    cor: '#d97706',
     bgClass: 'bg-amber-500',
     borderClass: 'border-amber-600',
-    badge: 'bg-amber-100 text-amber-800'
+    badge: 'bg-amber-100 text-amber-800 border border-amber-200'
   },
   ATRIBUIDA: {
     label: 'Atribuída',
-    cor: '#2563eb', // blue-600
+    cor: '#2563eb',
     bgClass: 'bg-blue-500',
     borderClass: 'border-blue-600',
-    badge: 'bg-blue-100 text-blue-800'
+    badge: 'bg-blue-100 text-blue-800 border border-blue-200'
   },
   EM_DESLOCAMENTO: {
     label: 'Em Deslocamento',
-    cor: '#6366f1', // indigo-500
+    cor: '#6366f1',
     bgClass: 'bg-indigo-500',
     borderClass: 'border-indigo-600',
-    badge: 'bg-indigo-100 text-indigo-800'
+    badge: 'bg-indigo-100 text-indigo-800 border border-indigo-200'
   },
   EM_ATENDIMENTO: {
     label: 'Em Atendimento',
-    cor: '#9333ea', // purple-600
+    cor: '#9333ea',
     bgClass: 'bg-purple-600',
     borderClass: 'border-purple-700',
-    badge: 'bg-purple-100 text-purple-800'
+    badge: 'bg-purple-100 text-purple-800 border border-purple-200'
   },
   CONCLUIDA: {
     label: 'Concluída',
-    cor: '#059669', // emerald-600
+    cor: '#059669',
     bgClass: 'bg-emerald-500',
     borderClass: 'border-emerald-600',
-    badge: 'bg-emerald-100 text-emerald-800'
+    badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200'
   }
 };
 
@@ -113,7 +107,7 @@ function criarIconeTecnico(tecnico, statusInfo, isSelecionado) {
     : '#2563eb';
 
   const isPulsando = statusInfo.tipo === 'EM_ATENDIMENTO' || statusInfo.tipo === 'EM_DESLOCAMENTO';
-  const inicial = (tecnico.nome || 'T').charAt(0).toUpperCase();
+  const inicial = (tecnico?.nome || 'T').charAt(0).toUpperCase();
 
   return L.divIcon({
     className: 'custom-tecnico-marker',
@@ -134,7 +128,7 @@ function criarIconeTecnico(tecnico, statusInfo, isSelecionado) {
   });
 }
 
-// Gerador de ícones Leaflet para Ordens de Serviço (com suporte a número sequencial na rota)
+// Gerador de ícones Leaflet para Ordens de Serviço
 function criarIconeStatus(status, codigo, os, sequenciaRota = null) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.ABERTA;
   const isPulsando = status === 'EM_DESLOCAMENTO' || status === 'EM_ATENDIMENTO';
@@ -236,7 +230,7 @@ export default function MapaPage() {
       setTecnicos(agentes.length > 0 ? agentes : (resUsuarios.data || []));
     } catch (err) {
       console.error('Erro ao buscar dados do mapa:', err);
-      setErro('Não foi possível carregar as ordens e equipe no mapa. Verifique a conexão.');
+      setErro('Não foi possível carregar as ordens e a equipe no mapa. Verifique a conexão com o servidor.');
     } finally {
       setCarregando(false);
     }
@@ -298,7 +292,6 @@ export default function MapaPage() {
   // Cálculo da Posição dos Colaboradores em Campo em Tempo Real
   const tecnicosComPosicao = useMemo(() => {
     return tecnicos.map((t) => {
-      // Ordens do técnico na data selecionada
       const ordensDoTecnico = ordensComCoordenadas
         .filter((o) => o.agente?.id === t.id)
         .sort((a, b) => new Date(a.dataAgendamento) - new Date(b.dataAgendamento));
@@ -421,7 +414,7 @@ export default function MapaPage() {
       {/* Barra de Navegação da Tríade Operacional */}
       <NavegacaoOperacional />
 
-      {/* Cabeçalho */}
+      {/* Cabeçalho da Página */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
@@ -435,7 +428,6 @@ export default function MapaPage() {
 
         {/* Controles de Navegação da Data & Ações */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Seletor Rápido de Data */}
           <div className="bg-white border border-slate-200 rounded-xl p-1 flex items-center shadow-xs">
             <button
               onClick={() => mudarDataRelativa(-1)}
@@ -484,7 +476,7 @@ export default function MapaPage() {
 
           <button
             onClick={centralizarSede}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-2.5 py-1.5 rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-2.5 py-1.5 rounded-xl text-xs shadow-xs transition-colors cursor-pointer active:scale-95"
             title="Centralizar na Sede Operacional (Prefeitura de SP)"
           >
             <Home size={14} className="text-amber-600" />
@@ -493,7 +485,7 @@ export default function MapaPage() {
 
           <button
             onClick={obterMinhaLocalizacao}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-2.5 py-1.5 rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-2.5 py-1.5 rounded-xl text-xs shadow-xs transition-colors cursor-pointer active:scale-95"
             title="Recentralizar no meu GPS"
           >
             <Navigation size={14} className="text-blue-600" />
@@ -503,7 +495,7 @@ export default function MapaPage() {
           <button
             onClick={carregarDados}
             disabled={carregando}
-            className="p-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 shadow-xs cursor-pointer transition-all"
+            className="p-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 shadow-xs cursor-pointer transition-all disabled:opacity-60 active:scale-95"
             title="Atualizar dados"
           >
             <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -511,14 +503,17 @@ export default function MapaPage() {
         </div>
       </div>
 
-      {/* Alerta de erro */}
+      {/* Alerta de erro da API */}
       {erro && (
-        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center justify-between">
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-center justify-between gap-3 animate-in fade-in">
           <div className="flex items-center gap-2">
-            <AlertCircle size={16} />
-            <span>{erro}</span>
+            <AlertCircle size={18} className="shrink-0 text-rose-600" />
+            <span className="font-medium">{erro}</span>
           </div>
-          <button onClick={carregarDados} className="underline font-semibold cursor-pointer">
+          <button
+            onClick={carregarDados}
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer transition-colors"
+          >
             Tentar novamente
           </button>
         </div>
@@ -552,7 +547,7 @@ export default function MapaPage() {
             }`}
           >
             <User size={12} />
-            <span>Técnicos ({tecnicosComPosicao.length})</span>
+            <span>Técnicos ({carregando ? '...' : tecnicosComPosicao.length})</span>
           </button>
 
           <button
@@ -564,7 +559,7 @@ export default function MapaPage() {
             }`}
           >
             <MapPin size={12} />
-            <span>Chamados ({ordensComCoordenadas.length})</span>
+            <span>Chamados ({carregando ? '...' : ordensComCoordenadas.length})</span>
           </button>
         </div>
 
@@ -583,7 +578,6 @@ export default function MapaPage() {
                 const tec = tecnicos.find((t) => String(t.id) === val);
                 setTecnicoRotaSelecionado(tec || null);
                 if (tec) {
-                  // Centraliza no técnico
                   const tecPos = tecnicosComPosicao.find((tp) => tp.tecnico.id === tec.id);
                   if (tecPos) {
                     setMapCenter(tecPos.posicao);
@@ -613,206 +607,218 @@ export default function MapaPage() {
         </div>
       </div>
 
-      {/* Container do Mapa Leaflet */}
+      {/* Container do Mapa Leaflet ou Skeleton Loader */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden relative h-[70vh] min-h-[500px]">
-        <MapContainer
-          center={mapCenter}
-          zoom={mapZoom}
-          scrollWheelZoom={true}
-          style={{ width: '100%', height: '100%', zIndex: 0 }}
-        >
-          <RecenterController center={mapCenter} zoom={mapZoom} />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-
-          {/* 1. Marcador da Sede Operacional */}
-          {exibirSede && (
-            <Marker position={COORDENADAS_SEDE} icon={criarIconeSede()}>
-              <Popup>
-                <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
-                    <span className="text-base">🏛️</span>
-                    <div>
-                      <h4 className="font-bold text-xs text-slate-900 leading-tight">Sede Operacional</h4>
-                      <span className="text-[10px] text-blue-600 font-semibold uppercase">Base de Despacho</span>
-                    </div>
-                  </div>
-                  <p className="text-2xs text-slate-600 leading-snug">
-                    Prefeitura de São Paulo • Viaduto do Chá, 15 - Centro Histórico
-                  </p>
-                  <div className="bg-blue-50 border border-blue-200/60 rounded-lg p-2 text-2xs text-blue-900 space-y-1">
-                    <span className="font-semibold block">Ponto de Partida Diário</span>
-                    <p className="text-blue-700">
-                      Origem das rotas calculadas para os {tecnicos.length} colaboradores de campo.
-                    </p>
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          )}
-
-          {/* 2. Traçado de Rota do Colaborador Selecionado (Polyline) */}
-          {rotaTecnicoSelecionado && rotaTecnicoSelecionado.pontos.length > 1 && (
-            <Polyline
-              positions={rotaTecnicoSelecionado.pontos}
-              pathOptions={{
-                color: '#2563eb',
-                weight: 4.5,
-                opacity: 0.85,
-                dashArray: '8, 8',
-                lineJoin: 'round'
-              }}
+        {carregando ? (
+          /* Skeleton Loader cobrindo o mapa durante o carregamento */
+          <div className="w-full h-full bg-slate-100 animate-pulse flex flex-col items-center justify-center p-6 space-y-4">
+            <div className="p-4 bg-slate-200 text-slate-400 rounded-full">
+              <Compass size={40} className="animate-spin text-blue-600" />
+            </div>
+            <div className="text-center space-y-2">
+              <div className="h-4 bg-slate-200 rounded-md w-48 mx-auto" />
+              <div className="h-3 bg-slate-150 rounded-md w-64 mx-auto" />
+            </div>
+          </div>
+        ) : (
+          <MapContainer
+            center={mapCenter}
+            zoom={mapZoom}
+            scrollWheelZoom={true}
+            style={{ width: '100%', height: '100%', zIndex: 0 }}
+          >
+            <RecenterController center={mapCenter} zoom={mapZoom} />
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-          )}
 
-          {/* 3. Marcadores dos Colaboradores em Campo */}
-          {exibirTecnicos && tecnicosComPosicao.map((item) => {
-            const isSelecionado = tecnicoRotaSelecionado?.id === item.tecnico.id;
-
-            return (
-              <Marker
-                key={`tec-${item.tecnico.id}`}
-                position={item.posicao}
-                icon={criarIconeTecnico(item.tecnico, item, isSelecionado)}
-              >
+            {/* 1. Marcador da Sede Operacional */}
+            {exibirSede && (
+              <Marker position={COORDENADAS_SEDE} icon={criarIconeSede()}>
                 <Popup>
                   <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
-                          {item.tecnico.nome.charAt(0)}
-                        </div>
-                        <span className="font-bold text-xs text-slate-900">{item.tecnico.nome}</span>
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-1.5">
+                      <span className="text-base">🏛️</span>
+                      <div>
+                        <h4 className="font-bold text-xs text-slate-900 leading-tight">Sede Operacional</h4>
+                        <span className="text-[10px] text-blue-600 font-semibold uppercase">Base de Despacho</span>
                       </div>
-                      <span 
-                        className="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase"
-                        style={{ backgroundColor: `${item.cor}20`, color: item.cor }}
-                      >
-                        {item.status.replace('_', ' ')}
-                      </span>
                     </div>
-
-                    <div className="text-2xs text-slate-600 space-y-1">
-                      <p className="font-semibold flex items-center gap-1">
-                        <MapPin size={11} className="text-slate-400" />
-                        <span>{item.textoStatus}</span>
-                      </p>
-                      <p className="text-slate-500">
-                        {item.ordensHoje.length} ordens de serviço agendadas para hoje.
+                    <p className="text-2xs text-slate-600 leading-snug">
+                      Prefeitura de São Paulo • Viaduto do Chá, 15 - Centro Histórico
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200/60 rounded-lg p-2 text-2xs text-blue-900 space-y-1">
+                      <span className="font-semibold block">Ponto de Partida Diário</span>
+                      <p className="text-blue-700">
+                        Origem das rotas calculadas para os {tecnicos.length} colaboradores de campo.
                       </p>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setTecnicoRotaSelecionado(item.tecnico)}
-                      className="w-full mt-2 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs"
-                    >
-                      <RouteIcon size={13} />
-                      <span>{isSelecionado ? 'Rota Já Ativa' : 'Ver Rota do Dia no Mapa'}</span>
-                    </button>
                   </div>
                 </Popup>
               </Marker>
-            );
-          })}
+            )}
 
-          {/* 4. Marcadores das Ordens de Serviço */}
-          {exibirOrdens && ordensExibidas.map((o) => {
-            const statusKey = o.status || 'ABERTA';
-            const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.ABERTA;
+            {/* 2. Traçado de Rota do Colaborador Selecionado (Polyline) */}
+            {rotaTecnicoSelecionado && rotaTecnicoSelecionado.pontos.length > 1 && (
+              <Polyline
+                positions={rotaTecnicoSelecionado.pontos}
+                pathOptions={{
+                  color: '#2563eb',
+                  weight: 4.5,
+                  opacity: 0.85,
+                  dashArray: '8, 8',
+                  lineJoin: 'round'
+                }}
+              />
+            )}
 
-            // Identifica se faz parte da rota selecionada e qual o número da parada
-            let sequenciaRota = null;
-            if (rotaTecnicoSelecionado) {
-              const idx = rotaTecnicoSelecionado.ordens.findIndex((ro) => ro.id === o.id);
-              if (idx !== -1) {
-                sequenciaRota = idx + 1;
-              }
-            }
+            {/* 3. Marcadores dos Colaboradores em Campo */}
+            {exibirTecnicos && tecnicosComPosicao.map((item) => {
+              const isSelecionado = tecnicoRotaSelecionado?.id === item.tecnico.id;
 
-            return (
-              <Marker
-                key={`os-${o.id}`}
-                position={o.posicao}
-                icon={criarIconeStatus(statusKey, o.id, o, sequenciaRota)}
-              >
-                <Popup>
-                  <div className="p-1 space-y-2 min-w-[230px] text-slate-800">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-blue-600">OS #{o.id}</span>
-                        {sequenciaRota != null && (
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded">
-                            {sequenciaRota}ª Parada
-                          </span>
-                        )}
-                      </div>
-                      <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${cfg.badge}`}>
-                        {cfg.label}
-                      </span>
-                    </div>
-
-                    <p className="font-semibold text-xs text-slate-900 leading-tight">
-                      {o.titulo}
-                    </p>
-
-                    {o.equipamento && (
-                      <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-xs">
-                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-                          <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
-                          <span className="truncate">{o.equipamento.nome}</span>
+              return (
+                <Marker
+                  key={`tec-${item.tecnico.id}`}
+                  position={item.posicao}
+                  icon={criarIconeTecnico(item.tecnico, item, isSelecionado)}
+                >
+                  <Popup>
+                    <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
+                            {item.tecnico.nome?.charAt(0) || 'T'}
+                          </div>
+                          <span className="font-bold text-xs text-slate-900">{item.tecnico.nome}</span>
                         </div>
+                        <span 
+                          className="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase"
+                          style={{ backgroundColor: `${item.cor}20`, color: item.cor }}
+                        >
+                          {item.status.replace('_', ' ')}
+                        </span>
                       </div>
-                    )}
 
-                    <div className="space-y-1 text-[11px] text-slate-600">
-                      <div className="flex items-center gap-1.5">
-                        <Building2 size={13} className="text-slate-400 shrink-0" />
-                        <span className="truncate">{o.cliente?.nome || 'Cliente não informado'}</span>
+                      <div className="text-2xs text-slate-600 space-y-1">
+                        <p className="font-semibold flex items-center gap-1">
+                          <MapPin size={11} className="text-slate-400" />
+                          <span>{item.textoStatus}</span>
+                        </p>
+                        <p className="text-slate-500">
+                          {item.ordensHoje.length} ordens de serviço agendadas para hoje.
+                        </p>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <User size={13} className="text-slate-400 shrink-0" />
-                        <span className="truncate">{o.agente?.nome || 'Sem técnico atribuído'}</span>
+
+                      <button
+                        type="button"
+                        onClick={() => setTecnicoRotaSelecionado(item.tecnico)}
+                        className="w-full mt-2 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs active:scale-95"
+                      >
+                        <RouteIcon size={13} />
+                        <span>{isSelecionado ? 'Rota Já Ativa' : 'Ver Rota do Dia no Mapa'}</span>
+                      </button>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+
+            {/* 4. Marcadores das Ordens de Serviço */}
+            {exibirOrdens && ordensExibidas.map((o) => {
+              const statusKey = o.status || 'ABERTA';
+              const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.ABERTA;
+
+              let sequenciaRota = null;
+              if (rotaTecnicoSelecionado) {
+                const idx = rotaTecnicoSelecionado.ordens.findIndex((ro) => ro.id === o.id);
+                if (idx !== -1) {
+                  sequenciaRota = idx + 1;
+                }
+              }
+
+              return (
+                <Marker
+                  key={`os-${o.id}`}
+                  position={o.posicao}
+                  icon={criarIconeStatus(statusKey, o.id, o, sequenciaRota)}
+                >
+                  <Popup>
+                    <div className="p-1 space-y-2 min-w-[230px] text-slate-800">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs font-bold text-blue-600">OS #{o.id}</span>
+                          {sequenciaRota != null && (
+                            <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded">
+                              {sequenciaRota}ª Parada
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${cfg.badge}`}>
+                          {cfg.label}
+                        </span>
                       </div>
-                      {o.dataAgendamento && (
-                        <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-500">
-                          <Clock size={12} className="text-slate-400 shrink-0" />
-                          <span>
-                            {new Date(o.dataAgendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+
+                      <p className="font-semibold text-xs text-slate-900 leading-tight">
+                        {o.titulo}
+                      </p>
+
+                      {o.equipamento && (
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-lg p-2 text-xs">
+                          <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                            <span>{getCategoriaInfo(o.equipamento.categoria).emoji}</span>
+                            <span className="truncate">{o.equipamento.nome}</span>
+                          </div>
                         </div>
                       )}
-                    </div>
 
-                    <div className="pt-2 space-y-1.5">
-                      <button
-                        onClick={() => copiarLinkRastreio(o)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
-                        title="Copiar Link para enviar ao Cliente via WhatsApp"
-                      >
-                        {copiadoId === o.id ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
-                        <span>{copiadoId === o.id ? 'Link Copiado!' : 'Copiar Rastreio Cliente'}</span>
-                      </button>
+                      <div className="space-y-1 text-[11px] text-slate-600">
+                        <div className="flex items-center gap-1.5">
+                          <Building2 size={13} className="text-slate-400 shrink-0" />
+                          <span className="truncate">{o.cliente?.nome || 'Cliente não informado'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <User size={13} className="text-slate-400 shrink-0" />
+                          <span className="truncate">{o.agente?.nome || 'Sem técnico atribuído'}</span>
+                        </div>
+                        {o.dataAgendamento && (
+                          <div className="flex items-center gap-1.5 font-mono text-[10px] text-slate-500">
+                            <Clock size={12} className="text-slate-400 shrink-0" />
+                            <span>
+                              {new Date(o.dataAgendamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                      <button
-                        onClick={() => setOsSelecionada(o)}
-                        className="w-full inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
-                      >
-                        <Eye size={13} />
-                        <span>Ver Laudo & Detalhes</span>
-                      </button>
+                      <div className="pt-2 space-y-1.5">
+                        <button
+                          onClick={() => copiarLinkRastreio(o)}
+                          className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1.5 rounded-md text-xs transition-colors cursor-pointer active:scale-95"
+                          title="Copiar Link para enviar ao Cliente via WhatsApp"
+                        >
+                          {copiadoId === o.id ? <Check size={13} className="text-emerald-600" /> : <Share2 size={13} />}
+                          <span>{copiadoId === o.id ? 'Link Copiado!' : 'Copiar Rastreio Cliente'}</span>
+                        </button>
+
+                        <button
+                          onClick={() => setOsSelecionada(o)}
+                          className="w-full inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer active:scale-95"
+                        >
+                          <Eye size={13} />
+                          <span>Ver Laudo & Detalhes</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        )}
 
         {/* Painel Flutuante Lateral da Rota Encadeada do Técnico */}
-        {rotaTecnicoSelecionado && (
+        {rotaTecnicoSelecionado && !carregando && (
           <div className="absolute top-3 right-3 z-20 w-80 max-h-[85%] bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl shadow-xl p-4 flex flex-col space-y-3 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2">
@@ -864,7 +870,6 @@ export default function MapaPage() {
                   const paradaNum = idx + 1;
                   const dataAg = new Date(o.dataAgendamento);
                   const horaStr = dataAg.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                  const cfg = STATUS_CONFIG[o.status] || STATUS_CONFIG.ABERTA;
 
                   return (
                     <div
@@ -887,7 +892,7 @@ export default function MapaPage() {
                         <span className="font-mono font-semibold text-[10px] text-slate-600">{horaStr}</span>
                       </div>
                       <p className="text-[10px] text-slate-500 pl-6.5 truncate">
-                        OS #{o.id} • {o.titulo}
+                        OS #{o.id} - {o.titulo}
                       </p>
                     </div>
                   );

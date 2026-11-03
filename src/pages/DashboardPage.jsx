@@ -216,7 +216,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setModalSimuladorAberto(true)}
-            className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-all cursor-pointer"
+            className="btn-press inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs cursor-pointer"
             title="Abrir Central de Simulação Autônoma (Bots Despachante & Técnicos)"
           >
             <Bot size={16} />
@@ -225,7 +225,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => setModalNovaOSAberto(true)}
-            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+            className="btn-press inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3.5 py-2 rounded-xl text-xs sm:text-sm shadow-xs cursor-pointer"
           >
             <Plus size={16} />
             <span>Nova O.S.</span>
@@ -233,7 +233,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => navigate('/linha-do-tempo')}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+            className="btn-press inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow-2xs cursor-pointer"
           >
             <Clock size={15} className="text-blue-600" />
             <span>Linha do Tempo</span>
@@ -241,7 +241,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => navigate('/mapa')}
-            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
+            className="btn-press inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2 rounded-xl text-xs sm:text-sm shadow-2xs cursor-pointer"
           >
             <Map size={15} className="text-emerald-600" />
             <span>Mapa ao Vivo</span>
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           <button
             onClick={carregarMetricas}
             disabled={carregando}
-            className="p-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl shadow-2xs cursor-pointer transition-colors"
+            className="btn-press p-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl shadow-2xs cursor-pointer"
             title="Atualizar dados"
           >
             <RotateCw size={15} className={carregando ? 'animate-spin text-blue-600' : ''} />
@@ -290,11 +290,11 @@ export default function DashboardPage() {
                 {carregando ? (
                   <div className="h-7 w-16 bg-slate-200 rounded-lg animate-pulse" />
                 ) : (
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">
                     {c.count}
                   </h3>
                 )}
-                {c.sub && <span className="text-[10px] text-slate-400 font-medium block mt-0.5">{c.sub}</span>}
+                {c.sub && <span className="text-[10px] text-slate-400 font-medium block mt-0.5 tabular-nums">{c.sub}</span>}
               </div>
             </div>
           );

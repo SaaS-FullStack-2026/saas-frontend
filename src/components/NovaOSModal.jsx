@@ -149,19 +149,24 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-3 sm:p-4 modal-backdrop">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200/80 modal-surface">
         
-        {/* Cabeçalho do Modal */}
-        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
-          <div className="flex items-center gap-2 text-slate-800 font-bold text-base sm:text-lg">
-            <ClipboardPlus size={20} className="text-blue-600 sm:w-[22px] sm:h-[22px]" />
-            <h3>Nova Ordem de Serviço</h3>
+        {/* Cabeçalho do Modal com acabamento refinado */}
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
+          <div className="flex items-center gap-2.5 text-slate-900 font-bold text-base sm:text-lg">
+            <div className="p-1.5 bg-blue-600/10 text-blue-600 rounded-lg">
+              <ClipboardPlus size={20} />
+            </div>
+            <div>
+              <h3 className="tracking-tight">Nova Ordem de Serviço</h3>
+              <p className="text-[11px] font-normal text-slate-500">Preencha os dados e despache para a equipe de campo</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={handleFechar}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer btn-press"
           >
             <X size={18} />
           </button>
@@ -175,187 +180,202 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
           </div>
         )}
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto">
-          {/* Título */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Título do Serviço *
-            </label>
-            <input
-              type="text"
-              required
-              disabled={salvando}
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              placeholder="Ex: Manutenção Preventiva em Nobreak"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-60"
-            />
-          </div>
+        {/* Formulário com Hierarquia Visual de 3 Blocos */}
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+          
+          {/* BLOCO 1: IDENTIFICAÇÃO DO SERVIÇO & LOCAL */}
+          <div className="space-y-3.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block border-b border-slate-100 pb-1">
+              1. Identificação & Destino
+            </span>
 
-          {/* Grid de Seleção (Cliente e Técnico) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Select Cliente */}
+            {/* Título */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Building2 size={13} className="text-slate-400" /> Cliente *
-              </label>
-              <select
-                required
-                disabled={carregandoDados || salvando}
-                value={clienteId}
-                onChange={(e) => setClienteId(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
-              >
-                <option value="">{carregandoDados ? 'Carregando...' : 'Selecione...'}</option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Select Técnico */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <User size={13} className="text-slate-400" /> Técnico (Opcional)
-              </label>
-              <select
-                disabled={carregandoDados || salvando}
-                value={agenteId}
-                onChange={(e) => setAgenteId(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
-              >
-                <option value="">{carregandoDados ? 'Carregando...' : 'Deixar em Aberto'}</option>
-                {agentes.map((a) => (
-                  <option key={a.id} value={a.id}>{a.nome}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Select Equipamento / Ativo Vinculado */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
-              <span className="flex items-center gap-1">
-                <Wrench size={13} className="text-slate-400" /> Equipamento / Ativo do Cliente (Opcional)
-              </span>
-              {clienteId && equipamentos.length === 0 && !carregandoEquipamentos && (
-                <span className="text-[10px] text-amber-600 font-normal">Nenhum ativo cadastrado para este cliente</span>
-              )}
-            </label>
-            <select
-              disabled={!clienteId || carregandoEquipamentos || salvando}
-              value={equipamentoId}
-              onChange={(e) => setEquipamentoId(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
-            >
-              <option value="">
-                {!clienteId
-                  ? 'Selecione primeiro o cliente acima...'
-                  : carregandoEquipamentos
-                  ? 'Carregando equipamentos do cliente...'
-                  : equipamentos.length === 0
-                  ? 'Nenhum equipamento cadastrado (atendimento geral)'
-                  : 'Selecione o equipamento a consertar/inspecionar (Opcional)...'}
-              </option>
-              {equipamentos.map((eq) => {
-                const cat = getCategoriaInfo(eq.categoria);
-                return (
-                  <option key={eq.id} value={eq.id}>
-                    {cat.emoji} {eq.nome} {eq.numeroSerie ? `(S/N: ${eq.numeroSerie})` : ''} - {eq.localizacao || cat.label}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {/* Grid de Tipo de Serviço e Prioridade */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Tipo de Serviço */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Tag size={13} className="text-slate-400" /> Tipo de Serviço
-              </label>
-              <select
-                disabled={salvando}
-                value={tipoServico}
-                onChange={(e) => setTipoServico(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
-              >
-                <option value="PREVENTIVA">Manutenção Preventiva</option>
-                <option value="CORRETIVA">Manutenção Corretiva</option>
-                <option value="INSTALACAO">Instalação de Ativo</option>
-                <option value="VISTORIA">Vistoria / Inspeção</option>
-              </select>
-            </div>
-
-            {/* Nível de Prioridade */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <AlertTriangle size={13} className="text-slate-400" /> Prioridade
-              </label>
-              <select
-                disabled={salvando}
-                value={prioridade}
-                onChange={(e) => setPrioridade(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
-              >
-                <option value="BAIXA">Baixa</option>
-                <option value="MEDIA">Média</option>
-                <option value="ALTA">Alta</option>
-                <option value="CRITICA">Crítica / Urgente</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Data e Horário Previsto & Duração Estimada */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Calendar size={13} className="text-slate-400" /> Agendamento (Data e Hora)
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Título do Chamado *
               </label>
               <input
-                type="datetime-local"
+                type="text"
+                required
                 disabled={salvando}
-                value={dataAgendamento}
-                onChange={(e) => setDataAgendamento(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60 font-medium"
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                placeholder="Ex: Manutenção Preventiva em Nobreak"
+                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-60 placeholder:text-slate-400"
               />
             </div>
 
+            {/* Grid de Seleção (Cliente e Técnico) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Select Cliente */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Building2 size={13} className="text-slate-400" /> Cliente Solicitante *
+                </label>
+                <select
+                  required
+                  disabled={carregandoDados || salvando}
+                  value={clienteId}
+                  onChange={(e) => setClienteId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+                >
+                  <option value="">{carregandoDados ? 'Carregando clientes...' : 'Selecione o cliente...'}</option>
+                  {clientes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Select Técnico */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <User size={13} className="text-slate-400" /> Técnico Responsável
+                </label>
+                <select
+                  disabled={carregandoDados || salvando}
+                  value={agenteId}
+                  onChange={(e) => setAgenteId(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+                >
+                  <option value="">{carregandoDados ? 'Carregando técnicos...' : 'Deixar em Aberto (Despachar depois)'}</option>
+                  {agentes.map((a) => (
+                    <option key={a.id} value={a.id}>{a.nome}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Select Equipamento / Ativo Vinculado */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Clock size={13} className="text-slate-400" /> Duração Estimada
+              <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Wrench size={13} className="text-slate-400" /> Ativo / Equipamento do Cliente
+                </span>
+                {clienteId && equipamentos.length === 0 && !carregandoEquipamentos && (
+                  <span className="text-[10px] text-amber-600 font-normal">Nenhum ativo específico vinculado</span>
+                )}
               </label>
               <select
-                disabled={salvando}
-                value={duracaoEstimadaMinutos}
-                onChange={(e) => setDuracaoEstimadaMinutos(Number(e.target.value))}
-                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+                disabled={!clienteId || carregandoEquipamentos || salvando}
+                value={equipamentoId}
+                onChange={(e) => setEquipamentoId(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
               >
-                <option value={30}>30 minutos</option>
-                <option value={45}>45 minutos</option>
-                <option value={60}>1 hora (Padrão)</option>
-                <option value={90}>1 hora e 30 min</option>
-                <option value={120}>2 horas</option>
-                <option value={180}>3 horas</option>
-                <option value={240}>4 horas</option>
+                <option value="">
+                  {!clienteId
+                    ? 'Selecione primeiro o cliente acima...'
+                    : carregandoEquipamentos
+                    ? 'Carregando equipamentos do cliente...'
+                    : equipamentos.length === 0
+                    ? 'Atendimento geral (sem ativo específico)'
+                    : 'Selecione o equipamento a inspecionar/consertar...'}
+                </option>
+                {equipamentos.map((eq) => {
+                  const cat = getCategoriaInfo(eq.categoria);
+                  return (
+                    <option key={eq.id} value={eq.id}>
+                      {cat.emoji} {eq.nome} {eq.numeroSerie ? `(S/N: ${eq.numeroSerie})` : ''} - {eq.localizacao || cat.label}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
 
-          {/* Descrição */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-              Descrição Detalhada das Instruções
-            </label>
+          {/* BLOCO 2: CLASSIFICAÇÃO, DATA & SLA */}
+          <div className="space-y-3.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block border-b border-slate-100 pb-1">
+              2. Classificação & Agendamento
+            </span>
+
+            {/* Grid de Tipo de Serviço e Prioridade */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Tipo de Serviço */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Tag size={13} className="text-slate-400" /> Tipo de Serviço
+                </label>
+                <select
+                  disabled={salvando}
+                  value={tipoServico}
+                  onChange={(e) => setTipoServico(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+                >
+                  <option value="PREVENTIVA">Manutenção Preventiva</option>
+                  <option value="CORRETIVA">Manutenção Corretiva</option>
+                  <option value="INSTALACAO">Instalação de Ativo</option>
+                  <option value="VISTORIA">Vistoria / Inspeção</option>
+                </select>
+              </div>
+
+              {/* Nível de Prioridade */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <AlertTriangle size={13} className="text-slate-400" /> Nível de Prioridade
+                </label>
+                <select
+                  disabled={salvando}
+                  value={prioridade}
+                  onChange={(e) => setPrioridade(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60"
+                >
+                  <option value="BAIXA">Baixa</option>
+                  <option value="MEDIA">Média (Padrão)</option>
+                  <option value="ALTA">Alta</option>
+                  <option value="CRITICA">Crítica / Urgente</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Data e Horário & Duração Estimada */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Calendar size={13} className="text-slate-400" /> Data e Horário Previsto
+                </label>
+                <input
+                  type="datetime-local"
+                  disabled={salvando}
+                  value={dataAgendamento}
+                  onChange={(e) => setDataAgendamento(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60 font-medium tabular-nums"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+                  <Clock size={13} className="text-slate-400" /> Duração Estimada
+                </label>
+                <select
+                  disabled={salvando}
+                  value={duracaoEstimadaMinutos}
+                  onChange={(e) => setDuracaoEstimadaMinutos(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer disabled:opacity-60 tabular-nums"
+                >
+                  <option value={30}>30 minutos</option>
+                  <option value={45}>45 minutos</option>
+                  <option value={60}>1 hora (Padrão)</option>
+                  <option value={90}>1 hora e 30 min</option>
+                  <option value={120}>2 horas</option>
+                  <option value={180}>3 horas</option>
+                  <option value={240}>4 horas</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* BLOCO 3: INSTRUÇÕES OPERACIONAIS */}
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block border-b border-slate-100 pb-1">
+              3. Orientações de Campo
+            </span>
             <textarea
               rows={3}
               disabled={salvando}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva as tarefas e orientações para a execução em campo..."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none disabled:opacity-60"
+              placeholder="Descreva as instruções e orientações para o técnico executar no local..."
+              className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none disabled:opacity-60 placeholder:text-slate-400"
             />
           </div>
 
@@ -365,19 +385,19 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
               type="button"
               onClick={handleFechar}
               disabled={salvando}
-              className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              className="btn-press px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={salvando || carregandoDados}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="btn-press inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {salvando ? (
                 <>
                   <Loader2 size={16} className="animate-spin text-white" />
-                  <span>Criando...</span>
+                  <span>Criando Chamado...</span>
                 </>
               ) : (
                 <span>Criar Ordem</span>

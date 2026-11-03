@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, QrCode, MapPin, Hash, Check } from 'lucide-react';
+import { X, Printer, QrCode, MapPin, Hash, Check, Copy } from 'lucide-react';
 import { getCategoriaInfo } from '../utils/equipamentoCategorias';
 
 export default function QRCodeModal({ equipamento, isOpen, onClose }) {
@@ -45,23 +45,23 @@ export default function QRCodeModal({ equipamento, isOpen, onClose }) {
         }
       `}</style>
 
-      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 flex flex-col animate-in zoom-in-95 duration-150">
+      <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto modal-backdrop">
+        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200/80 flex flex-col modal-surface">
           
           {/* Cabeçalho do Modal */}
-          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-blue-100 text-blue-700 rounded-xl">
                 <QrCode size={18} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm sm:text-base">Etiqueta QR Code do Ativo</h3>
-                <p className="text-xs text-slate-500">Identificação para colagem e rastreio em campo</p>
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base tracking-tight">Etiqueta QR Code do Ativo</h3>
+                <p className="text-[11px] text-slate-500">Identificação para colagem e rastreio em campo</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="btn-press p-1.5 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-200/60 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -71,7 +71,7 @@ export default function QRCodeModal({ equipamento, isOpen, onClose }) {
           <div className="p-6 flex flex-col items-center">
             <div 
               id="etiqueta-imprimivel"
-              className="w-full bg-gradient-to-b from-white to-slate-50 border-2 border-slate-800 rounded-xl p-5 shadow-xs space-y-4 text-center"
+              className="w-full bg-gradient-to-b from-white to-slate-50 border-2 border-slate-800 rounded-2xl p-5 shadow-xs space-y-4 text-center"
             >
               {/* Header da Etiqueta */}
               <div className="border-b border-slate-200 pb-3 flex items-center justify-between gap-2">
@@ -94,57 +94,64 @@ export default function QRCodeModal({ equipamento, isOpen, onClose }) {
                   {equipamento.fabricante || 'Fabricante N/D'} {equipamento.modelo ? `• ${equipamento.modelo}` : ''}
                 </p>
                 {equipamento.numeroSerie && (
-                  <p className="text-[11px] text-slate-500 font-mono">
+                  <p className="text-[11px] text-slate-500 font-mono tabular-nums">
                     S/N: {equipamento.numeroSerie}
                   </p>
                 )}
-                {equipamento.localizacao && (
-                  <div className="inline-flex items-center gap-1 text-[11px] text-slate-600 mt-1">
-                    <MapPin size={12} className="text-slate-400" />
-                    <span className="truncate">{equipamento.localizacao}</span>
-                  </div>
-                )}
               </div>
 
-              {/* Renderização do QR Code SVG */}
-              <div className="bg-white p-3 rounded-xl border border-slate-200 inline-block shadow-xs">
+              {/* O QR Code Impresso */}
+              <div className="p-3 bg-white border border-slate-200 rounded-xl inline-block shadow-inner">
                 <QRCodeSVG
                   value={equipamento.codigoQr || `EQP-${equipamento.id}`}
-                  size={160}
-                  level="H"
-                  includeMargin={false}
+                  size={150}
+                  level="M"
+                  includeMargin={true}
                 />
               </div>
 
-              {/* Código Alfanumérico */}
-              <div className="pt-1">
-                <span className="font-mono text-xs font-bold tracking-wider text-slate-800 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 inline-block">
-                  {equipamento.codigoQr || 'N/A'}
-                </span>
+              {/* Localização Física e Código Alfanumérico */}
+              <div className="pt-1 space-y-1">
+                {equipamento.localizacao && (
+                  <p className="text-xs text-slate-600 flex items-center justify-center gap-1">
+                    <MapPin size={12} className="text-slate-400 shrink-0" />
+                    <span className="truncate">{equipamento.localizacao}</span>
+                  </p>
+                )}
+                <div className="inline-flex items-center gap-1 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200 font-mono text-[11px] font-bold text-slate-700 tabular-nums">
+                  <Hash size={11} className="text-slate-400" />
+                  <span>{equipamento.codigoQr || `EQP-${equipamento.id}`}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Barra de Ações */}
-          <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+          {/* Rodapé com Ações de Impressão e Cópia */}
+          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
             <button
               onClick={copiarCodigo}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 px-3.5 py-2 rounded-xl transition-all cursor-pointer active:scale-95"
+              className="btn-press inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl shadow-2xs transition-colors cursor-pointer"
             >
-              {copiado ? <Check size={14} className="text-emerald-600" /> : <Hash size={14} />}
+              {copiado ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
               <span>{copiado ? 'Copiado!' : 'Copiar Código'}</span>
             </button>
+
             <div className="flex items-center gap-2">
               <button
+                onClick={onClose}
+                className="btn-press px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+              >
+                Fechar
+              </button>
+              <button
                 onClick={imprimirEtiqueta}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+                className="btn-press inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors cursor-pointer"
               >
                 <Printer size={14} />
                 <span>Imprimir Etiqueta</span>
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </>
