@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { Layers, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
@@ -70,6 +70,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+      {/* Botão de Retorno para a Landing Page */}
+      <div className="w-full max-w-md mb-3 flex items-center justify-between text-xs px-1">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors font-medium">
+          <span>← Voltar para a Apresentação</span>
+        </Link>
+        <span className="text-slate-500 text-2xs">TCC 2026</span>
+      </div>
+
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100">
         {/* Top Header */}
         <div className="p-8 pb-5 text-center">
