@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import MobileLayout from './components/layout/MobileLayout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import OrdensPage from './pages/OrdensPage';
@@ -19,6 +20,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rota Pública Principal da Landing Page de Apresentação */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
+
         {/* Rota Pública de Autenticação */}
         <Route path="/login" element={<LoginPage />} />
 
@@ -34,23 +39,22 @@ function App() {
 
         {/* Rotas Administrativas Desktop Protegidas (Gestor / Admin) */}
         <Route element={<ProtectedRoute allowedRoles={['GESTOR', 'ADMIN']} />}>
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="ordens" element={<OrdensPage />} />
-            <Route path="mapa" element={<MapaPage />} />
-            <Route path="linha-do-tempo" element={<LinhaDoTempoPage />} />
-            <Route path="cadastros" element={<CadastrosPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/ordens" element={<OrdensPage />} />
+            <Route path="/mapa" element={<MapaPage />} />
+            <Route path="/linha-do-tempo" element={<LinhaDoTempoPage />} />
+            <Route path="/cadastros" element={<CadastrosPage />} />
             {/* Redirecionamentos da Tríade de Cadastros para a Central Unificada */}
-            <Route path="equipamentos" element={<Navigate to="/cadastros?tab=ativos" replace />} />
-            <Route path="usuarios" element={<Navigate to="/cadastros?tab=equipe" replace />} />
-            <Route path="clientes" element={<Navigate to="/cadastros?tab=clientes" replace />} />
-            <Route path="status" element={<StatusCheck />} />
+            <Route path="/equipamentos" element={<Navigate to="/cadastros?tab=ativos" replace />} />
+            <Route path="/usuarios" element={<Navigate to="/cadastros?tab=equipe" replace />} />
+            <Route path="/clientes" element={<Navigate to="/cadastros?tab=clientes" replace />} />
+            <Route path="/status" element={<StatusCheck />} />
           </Route>
         </Route>
 
         {/* Redirecionamento de rotas desconhecidas */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
