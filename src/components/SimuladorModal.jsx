@@ -74,7 +74,8 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       setStatus(res.data);
       onCicloExecutado?.();
     } catch (err) {
-      setErro('Não foi possível iniciar a simulação.');
+      const detalhe = err.response?.data?.message || err.response?.data?.error || '';
+      setErro(`Não foi possível iniciar a simulação${detalhe ? ': ' + detalhe : '.'}`);
     } finally {
       setCarregando(false);
     }
@@ -88,7 +89,8 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       setStatus(res.data);
       onCicloExecutado?.();
     } catch (err) {
-      setErro('Não foi possível pausar a simulação.');
+      const detalhe = err.response?.data?.message || err.response?.data?.error || '';
+      setErro(`Não foi possível pausar a simulação${detalhe ? ': ' + detalhe : '.'}`);
     } finally {
       setCarregando(false);
     }
@@ -102,7 +104,8 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       await carregarStatus();
       onCicloExecutado?.();
     } catch (err) {
-      setErro('Erro ao rodar ciclo manual de simulação.');
+      const detalhe = err.response?.data?.message || err.response?.data?.error || '';
+      setErro(`Erro ao rodar ciclo manual de simulação${detalhe ? ': ' + detalhe : '.'}`);
     } finally {
       setExecutandoCiclo(false);
     }
@@ -119,7 +122,8 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       onCicloExecutado?.();
     } catch (err) {
       console.error('Erro ao povoar cenário de simulação:', err);
-      setErro('Falha ao auto-provisionar cenário de teste. Verifique a API.');
+      const detalhe = err.response?.data?.message || err.response?.data?.error || '';
+      setErro(`Falha ao auto-provisionar cenário de teste${detalhe ? ': ' + detalhe : '. Verifique a API.'}`);
     } finally {
       setPovoandoCenario(false);
     }
@@ -139,7 +143,8 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       onCicloExecutado?.();
     } catch (err) {
       console.error('Erro ao resetar simulação:', err);
-      setErro('Falha ao resetar ordens da simulação. Verifique a API.');
+      const detalheErro = err.response?.data?.message || err.response?.data?.error || err.message || 'Verifique a API.';
+      setErro(`Falha ao resetar ordens da simulação: ${detalheErro}`);
     } finally {
       setResetando(false);
     }
