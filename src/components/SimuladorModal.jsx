@@ -18,7 +18,8 @@ import {
   Check, 
   Users, 
   MapPin, 
-  Sprout 
+  Sprout,
+  Trash2 
 } from 'lucide-react';
 
 export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
@@ -39,6 +40,7 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
   const [carregando, setCarregando] = useState(false);
   const [executandoCiclo, setExecutandoCiclo] = useState(false);
   const [povoandoCenario, setPovoandoCenario] = useState(false);
+  const [resetando, setResetando] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState(null);
   const [erro, setErro] = useState(null);
 
@@ -120,6 +122,26 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
       setErro('Falha ao auto-provisionar cenário de teste. Verifique a API.');
     } finally {
       setPovoandoCenario(false);
+    }
+  };
+
+  const resetarMassa = async () => {
+    if (!window.confirm('Atenção: Isso irá pausar a simulação e apagar todas as ordens de serviço e históricos simulados para reiniciar as métricas do zero. Deseja prosseguir?')) {
+      return;
+    }
+    try {
+      setResetando(true);
+      setErro(null);
+      setMensagemSucesso(null);
+      const res = await api.post('/simulacao/reset');
+      setMensagemSucesso(res.data?.mensagem || 'Massa de ordens expurgada com sucesso!');
+      await carregarStatus();
+      onCicloExecutado?.();
+    } catch (err) {
+      console.error('Erro ao resetar simulação:', err);
+      setErro('Falha ao resetar ordens da simulação. Verifique a API.');
+    } finally {
+      setResetando(false);
     }
   };
 
@@ -264,6 +286,17 @@ export default function SimuladorModal({ isOpen, onClose, onCicloExecutado }) {
                 >
                   <Zap size={14} className={executandoCiclo ? 'animate-bounce text-amber-300' : ''} />
                   <span>{executandoCiclo ? 'Processando Ciclo...' : '⚡ Executar Ciclo Agora'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={resetando}
+                  onClick={resetarMassa}
+                  className="btn-press inline-flex items-center gap-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 font-semibold px-3 py-2 rounded-xl text-xs shadow-2xs cursor-pointer"
+                  title="Expurga ordens simuladas corrompidas e zera os contadores para reiniciar métricas reais"
+                >
+                  <Trash2 size={14} className={resetando ? 'animate-spin' : ''} />
+                  <span>{resetando ? 'Limpando...' : 'Zerar Massa & Métricas'}</span>
                 </button>
               </div>
             </div>
