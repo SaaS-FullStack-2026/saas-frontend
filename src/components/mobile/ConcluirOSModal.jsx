@@ -26,7 +26,7 @@ export default function ConcluirOSModal({ os, isOpen, onClose, onConcluir, salva
       return;
     }
 
-    onConcluir({
+    onConcluir?.({
       laudoTecnico: laudoTecnico.trim() || 'Serviço concluído conforme especificações técnicas.',
       assinaturaCliente,
       observacao: `Atendimento finalizado com sucesso. Laudo técnico registrado. ${

@@ -461,6 +461,10 @@ export default function DashboardPage() {
       <NovaOSModal
         isOpen={modalNovaOSAberto}
         onClose={() => setModalNovaOSAberto(false)}
+        onSuccess={() => {
+          setModalNovaOSAberto(false);
+          carregarMetricas();
+        }}
         onOSCriada={() => {
           setModalNovaOSAberto(false);
           carregarMetricas();

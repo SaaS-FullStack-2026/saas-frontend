@@ -12,7 +12,7 @@ const obterAgoraLocalInput = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
+export default function NovaOSModal({ isOpen, onClose, onSuccess, onOSCriada }) {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [clienteId, setClienteId] = useState('');
@@ -121,7 +121,7 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
 
       const dataIso = dataAgendamento ? new Date(dataAgendamento).toISOString() : null;
 
-      await api.post('/ordens-servico', {
+      const res = await api.post('/ordens-servico', {
         titulo,
         descricao,
         empresaId: user.empresaId || 1,
@@ -137,8 +137,12 @@ export default function NovaOSModal({ isOpen, onClose, onSuccess }) {
       });
 
       resetFormulario();
-      onSuccess();
-      onClose();
+      try {
+        (onSuccess || onOSCriada)?.(res?.data);
+      } catch (callbackErr) {
+        console.warn('Erro ao disparar callback pós-criação de OS:', callbackErr);
+      }
+      onClose?.();
     } catch (err) {
       console.error('Erro ao salvar Ordem de Serviço:', err);
       const mensagemServidor = err.response?.data?.message || err.response?.data || err.message;
