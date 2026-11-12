@@ -27,6 +27,18 @@ h1, h2, h3, h4 {
   text-wrap: balance;
 }
 
+/* Tipografia Editorial Inspirada no Design Ondro / Awsmd */
+.font-editorial {
+  font-family: 'Instrument Serif', Georgia, serif;
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
 /* Tabular numbers to prevent jitter on changing metrics / counters */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
