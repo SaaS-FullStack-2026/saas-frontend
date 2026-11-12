@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import api from '../services/api';
 import DetalhesOSModal from '../components/DetalhesOSModal';
 import NavegacaoOperacional from '../components/layout/NavegacaoOperacional';
@@ -338,6 +338,50 @@ export default function LinhaDoTempoPage() {
   const horaAgoraFloat = agora.getHours() + agora.getMinutes() / 60;
   const linhaAgoraLeftPx = (horaAgoraFloat - HORA_INICIAL_TIMELINE) * LARGURA_HORA_PX;
 
+  // Referência do container com scroll da matriz Gantt
+  const timelineScrollRef = useRef(null);
+
+  // Navegação horizontal suave para um determinado horário
+  const focarHorario = useCallback((horaAlvo, suave = true) => {
+    if (!timelineScrollRef.current) return;
+    const scrollAlvo = Math.max(0, horaAlvo * LARGURA_HORA_PX);
+    timelineScrollRef.current.scrollTo({
+      left: scrollAlvo,
+      behavior: suave ? 'smooth' : 'auto'
+    });
+  }, []);
+
+  // Foca exatamente em 3 horas antes da hora atual (deixando ~5 horas posteriores visíveis na tela)
+  const focarNoAgora = useCallback((suave = true) => {
+    const agoraAtual = new Date();
+    const horaFloat = agoraAtual.getHours() + agoraAtual.getMinutes() / 60;
+    const targetHora = Math.max(0, horaFloat - 3);
+    focarHorario(targetHora, suave);
+  }, [focarHorario]);
+
+  // Desloca N horas para frente ou para trás com as setas
+  const deslocarHoras = useCallback((qtdHoras) => {
+    if (!timelineScrollRef.current) return;
+    timelineScrollRef.current.scrollBy({
+      left: qtdHoras * LARGURA_HORA_PX,
+      behavior: 'smooth'
+    });
+  }, []);
+
+  // Auto-focalização inicial inteligente: 3h antes do Agora (em Hoje) ou início do expediente (07:30 / 08:00)
+  useEffect(() => {
+    if (!carregando) {
+      const timer = setTimeout(() => {
+        if (isHoje) {
+          focarNoAgora(false);
+        } else {
+          focarHorario(7.5, false);
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [carregando, dataSelecionada, isHoje, focarNoAgora, focarHorario]);
+
   return (
     <div className="space-y-4">
       {/* Barra de Navegação da Tríade Operacional */}
@@ -609,8 +653,94 @@ export default function LinhaDoTempoPage() {
 
       {/* Matriz Gantt / Linha do Tempo */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+        {/* Barra Superior: Controles de Navegação Horária (Setas e Foco Inteligente) */}
+        <div className="px-4 sm:px-5 py-2.5 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5 mr-0.5">
+              <Clock size={13} className="text-blue-600" />
+              Navegação:
+            </span>
+
+            {/* Conjunto de Controles por Seta e Foco no Agora */}
+            <div className="inline-flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => deslocarHoras(-3)}
+                className="btn-press px-2.5 py-1 text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Recuar 3 horas na visualização da linha do tempo"
+              >
+                <ChevronLeft size={14} />
+                <span>-3h</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => focarNoAgora(true)}
+                className={`btn-press px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isHoje 
+                    ? 'bg-blue-600 text-white shadow-xs hover:bg-blue-700' 
+                    : 'text-slate-700 hover:bg-slate-100'
+                }`}
+                title="Focar na hora atual: exibe 3h anteriores e 5h seguintes no campo visual sem precisar de scroll"
+              >
+                <span className={`w-2 h-2 rounded-full ${isHoje ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                <span>Agora (3h antes / 5h depois)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => deslocarHoras(3)}
+                className="btn-press px-2.5 py-1 text-slate-700 hover:text-blue-600 hover:bg-slate-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Avançar 3 horas na visualização da linha do tempo"
+              >
+                <span>+3h</span>
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Presets Rápidos de Horário */}
+            <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-500 ml-1">
+              <span className="text-slate-400 text-xs">Salto:</span>
+              <button
+                type="button"
+                onClick={() => focarHorario(8)}
+                className="px-2 py-0.5 rounded-md hover:bg-slate-200/70 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer font-medium"
+              >
+                Manhã (08h)
+              </button>
+              <button
+                type="button"
+                onClick={() => focarHorario(13)}
+                className="px-2 py-0.5 rounded-md hover:bg-slate-200/70 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer font-medium"
+              >
+                Tarde (13h)
+              </button>
+              <button
+                type="button"
+                onClick={() => focarHorario(0)}
+                className="px-2 py-0.5 rounded-md hover:bg-slate-200/70 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer font-medium"
+              >
+                Início (00h)
+              </button>
+            </div>
+          </div>
+
+          {/* Indicador de Horário em Foco */}
+          <div className="flex items-center gap-2 text-2xs text-slate-500">
+            {isHoje && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-mono font-bold shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                Agora: {agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+            <span className="hidden md:inline text-slate-400">
+              Grade 24h contínua com arrasto livre
+            </span>
+          </div>
+        </div>
+
         {/* Barra de Legenda */}
-        <div className="px-5 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50/70">
+        <div className="px-5 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50/40">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-2xs font-bold uppercase text-slate-400 tracking-wider">Status:</span>
             <span className="inline-flex items-center gap-1.5 text-blue-800 bg-blue-100 px-2 py-0.5 rounded font-medium text-2xs">
@@ -634,7 +764,7 @@ export default function LinhaDoTempoPage() {
         </div>
 
         {/* Scroll Horizontal da Matriz Gantt */}
-        <div className="overflow-x-auto relative">
+        <div ref={timelineScrollRef} className="overflow-x-auto relative">
           <div style={{ minWidth: `${280 + HORAS_TIMELINE.length * LARGURA_HORA_PX}px` }}>
             {/* Header das Horas */}
             <div className="flex items-center border-b border-slate-200 bg-slate-100/70 font-semibold text-xs text-slate-600 sticky top-0 z-20">
