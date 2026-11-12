@@ -96,15 +96,15 @@ export default function LandingPage() {
       titulo: 'Linha do Tempo Gantt',
       icon: Clock,
       badge: 'Despacho Visual',
-      desc: 'Cronograma horizontal dinâmico das 07:00 às 20:00 por colaborador, com alertas visuais de trânsito e rebalanceamento inteligente por proximidade.',
+      desc: 'Cronograma horizontal dinâmico por colaborador com auto-foco na hora atual (3h antes / 5h depois), navegação por setas e rebalanceamento inteligente.',
       destaques: [
         'Visualização temporal contínua da jornada de cada técnico',
-        'Identificação imediata de atrasos e sobreposições',
+        'Auto-scroll inteligente que foca no horário de trabalho atual',
         'Sugestão de colaborador mais próximo via fórmula Haversine',
         'Reatribuição e reagendamento inteligente com 1 clique'
       ],
       previewStats: [
-        { label: 'Janela Operacional', val: '07h - 20h', cor: 'text-blue-400' },
+        { label: 'Janela em Foco', val: '3h antes / 5h depois', cor: 'text-blue-400' },
         { label: 'Atrasos Viários', val: 'Auditados', cor: 'text-amber-400' },
         { label: 'Rebalanceamento', val: 'Proximidade', cor: 'text-emerald-400' }
       ]
@@ -168,527 +168,201 @@ export default function LandingPage() {
   const moduloAtivo = modulos.find((m) => m.id === activeTab) || modulos[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
-      {/* 1. NAVBAR FIXA COM MATERIAL TRANSLÚCIDO APPLE-GRADE */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group btn-press">
-            <div className="p-2 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Layers size={19} />
+    <div className="min-h-screen bg-[#edf2f7] text-slate-900 font-sans selection:bg-amber-400 selection:text-slate-950">
+      
+      {/* =========================================================================
+          1. HERO EM MOLDURA FLUTUANTE (ESTILO ONDRO / AWSMD DIORAMA)
+      ========================================================================= */}
+      <div className="max-w-[1360px] mx-auto pt-3 sm:pt-6 px-2.5 sm:px-6">
+        <div className="relative rounded-[28px] sm:rounded-[40px] border-[6px] sm:border-[12px] border-white shadow-2xl overflow-hidden min-h-[580px] sm:min-h-[660px] lg:min-h-[720px] flex flex-col justify-between bg-[#1b5cb8] select-none">
+          
+          {/* Imagem de Fundo Cenográfica 3D Diorama */}
+          <img
+            src="/hero-bg-scenic.jpg"
+            alt="FieldOps Scenic Landscape"
+            className="absolute inset-0 w-full h-full object-cover object-bottom pointer-events-none select-none"
+          />
+
+          {/* Gradiente Suave Superior no Céu para Contraste de Texto */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#114b99]/55 via-transparent to-transparent pointer-events-none" />
+
+          {/* Top Navbar em Pílula Translúcida */}
+          <header className="relative z-20 p-4 sm:p-6 lg:p-8 flex items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5 text-white group drop-shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+                <Layers size={17} />
+              </div>
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white drop-shadow-xs">fieldops</span>
+            </Link>
+
+            {/* Menu Central em Pílula de Vidro Fosco (Desktop) */}
+            <nav className="hidden md:flex items-center gap-6 glass-pill px-6 py-2 rounded-full text-xs font-semibold text-white/95 shadow-md">
+              <a href="#solucao" className="hover:text-white transition-opacity opacity-90 hover:opacity-100">Visão Geral</a>
+              <a href="#modulos" className="hover:text-white transition-opacity opacity-90 hover:opacity-100">Módulos</a>
+              <a href="#banca" className="hover:text-white transition-opacity opacity-90 hover:opacity-100">Acesso Rápido</a>
+              <a href="#arquitetura" className="hover:text-white transition-opacity opacity-90 hover:opacity-100">Arquitetura</a>
+            </nav>
+
+            {/* Ação Direita */}
+            <div className="flex items-center gap-2.5">
+              {isLogged ? (
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="btn-press bg-slate-950 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-lg shadow-black/30 cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Dashboard</span>
+                  <ArrowRight size={13} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="btn-press bg-slate-950 hover:bg-black text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-lg shadow-black/30 cursor-pointer"
+                >
+                  Entrar no Sistema
+                </button>
+              )}
             </div>
-            <div>
-              <span className="font-extrabold text-base sm:text-lg tracking-tight text-white block">FieldOps</span>
-              <span className="text-[10px] text-blue-400 font-semibold tracking-wider block -mt-1 uppercase">SaaS Gestão em Campo</span>
-            </div>
-          </Link>
+          </header>
 
-          {/* Links Centrais (Desktop) */}
-          <nav className="hidden md:flex items-center gap-7 text-xs font-semibold text-slate-300">
-            <a href="#solucao" className="hover:text-blue-400 transition-colors">A Solução</a>
-            <a href="#modulos" className="hover:text-blue-400 transition-colors">Módulos</a>
-            <a href="#como-funciona" className="hover:text-blue-400 transition-colors">Como Funciona</a>
-            <a href="#arquitetura" className="hover:text-blue-400 transition-colors">Arquitetura</a>
-            <a href="#banca" className="hover:text-blue-400 transition-colors">Banca Avaliadora</a>
-          </nav>
-
-          {/* Ações Direitas */}
-          <div className="flex items-center gap-3">
-            {/* Status da API */}
-            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-900 border border-slate-800">
-              <span className={`w-2 h-2 rounded-full ${apiOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
-              <span className={apiOnline ? 'text-emerald-400' : 'text-slate-400'}>
-                {apiOnline ? 'API Online' : 'API Conectando...'}
-              </span>
-            </div>
-
-            {/* Link GitHub */}
-            <a
-              href="https://github.com/SaaS-FullStack-2026"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors hidden sm:block btn-press"
-              title="Ver código no GitHub"
-            >
-              <Code2 size={16} />
-            </a>
-
-            {/* Botão de Entrada */}
-            {isLogged ? (
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="btn-press inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 cursor-pointer"
-              >
-                <span>Acessar Dashboard</span>
-                <ArrowRight size={15} />
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="btn-press inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-blue-500/20 cursor-pointer"
-              >
-                <span>Entrar no Sistema</span>
-                <ArrowRight size={15} />
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* 2. HERO SECTION COM CONTROLE DE LINHA E TIPOGRAFIA BALANCEADA */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28">
-        {/* Glow sutil em camadas */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[650px] h-[360px] bg-gradient-to-tr from-blue-600/15 via-indigo-600/15 to-purple-600/10 blur-[130px] pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto space-y-6">
-            {/* Tag Acadêmica com Glassmorphism */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-500/10 border border-blue-500/20 text-blue-300 shadow-inner">
-              <Sparkles size={14} className="text-amber-400" />
-              <span>Projeto de Conclusão de Curso 2026 • Full Stack SaaS</span>
-            </div>
-
-            {/* Headline com Tracking Estrito */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-[-0.03em] leading-[1.12]">
-              A Revolução na Gestão e Despacho de{' '}
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-                Serviços em Campo
-              </span>
+          {/* Conteúdo Central do Hero: Tipografia Editorial Estilo Ondro */}
+          <div className="relative z-10 text-center px-4 max-w-4xl mx-auto pt-2 sm:pt-6 space-y-4 sm:space-y-5">
+            <h1 className="font-editorial text-4xl sm:text-6xl lg:text-7xl text-white tracking-tight leading-[1.08] drop-shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
+              Dê à sua <span className="italic font-normal text-amber-200">operação de campo</span><br />
+              um destino certo.
             </h1>
 
-            {/* Subtítulo com Line-capping de ~58ch para leitura confortável */}
-            <p className="text-sm sm:text-lg text-slate-300 max-w-[58ch] mx-auto leading-relaxed">
-              Elimine o caos de planilhas e mensagens de WhatsApp. Conecte despachantes a colaboradores em trânsito com cálculo de rotas Haversine, telemetria em tempo real, assinatura digital na tela e simulação 24h.
+            <p className="text-white/95 text-xs sm:text-sm md:text-base font-normal max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
+              Orquestre rotas, técnicos e ordens de serviço em tempo real. Elimine atrasos com inteligência geográfica e automação contínua de ponta a ponta.
             </p>
 
-            {/* CTAs com Feedback Tátil */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5">
+            {/* Botões Duplos de CTA (Âmbar com Selo ✦ e Vidro Fosco) */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <button
                 onClick={() => navigate('/login')}
-                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-xl shadow-blue-600/25 text-sm cursor-pointer group"
+                className="btn-press bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold px-6 py-3 rounded-full flex items-center gap-2.5 text-xs sm:text-sm shadow-xl shadow-amber-500/30 cursor-pointer"
               >
-                <Zap size={18} className="text-amber-300 group-hover:scale-110 transition-transform" />
-                <span>Testar Demonstração ao Vivo</span>
-                <ArrowRight size={16} />
+                <span>Experimentar agora</span>
+                <span className="w-6 h-6 rounded-full bg-slate-950 text-amber-300 flex items-center justify-center text-[10px] font-black">
+                  ✦
+                </span>
+              </button>
+
+              <a
+                href="#modulos"
+                className="btn-press glass-pill hover:bg-white/25 text-white font-semibold px-6 py-3 rounded-full text-xs sm:text-sm shadow-md cursor-pointer transition-colors"
+              >
+                Explorar o ecossistema
+              </a>
+            </div>
+          </div>
+
+          {/* Rodapé Interno da Moldura Cenográfica */}
+          <div className="relative z-10 p-4 sm:p-6 lg:p-8 flex items-end justify-between">
+            {/* Status da API em Pill Glassmorphic */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/70 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold shadow-md">
+              <span className={`w-2 h-2 rounded-full ${apiOnline ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+              <span>{apiOnline ? 'API Online no Railway' : 'API Conectando...'}</span>
+            </div>
+
+            {/* Badge de Logística */}
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[11px] font-medium shadow-md">
+              <Truck size={13} className="text-amber-300" />
+              <span>Frota de Campo & Despacho Inteligente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          2. CARDS DE ACESSO RÁPIDO PARA A BANCA AVALIADORA (DESTAQUE IMEDIATO)
+      ========================================================================= */}
+      <section id="banca" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-8">
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+            <div className="space-y-1.5 max-w-xl">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 border border-amber-500/20">
+                <Star size={13} className="text-amber-500" />
+                <span>Avaliação Acadêmica • Acesso Imediato</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Credenciais de Demonstração para Professores e Avaliadores
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                Clique nos botões abaixo para copiar as credenciais ou acesse diretamente com 1 clique para testar o sistema pré-carregado com frotas, clientes e o Simulador 24h.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                onClick={() => navigate('/login')}
+                className="btn-press bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-600/20 cursor-pointer flex items-center gap-1.5"
+              >
+                <Zap size={15} className="text-amber-300" />
+                <span>Ir para Login</span>
               </button>
 
               <a
                 href="https://apifieldopss.up.railway.app/swagger-ui/index.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-semibold px-5 py-3.5 rounded-xl border border-slate-800 text-sm shadow-xs"
+                className="btn-press bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2.5 rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
               >
-                <Server size={17} className="text-emerald-400" />
-                <span>Documentação Swagger (API)</span>
-                <ExternalLink size={14} className="text-slate-400" />
-              </a>
-
-              <a
-                href="#banca"
-                className="btn-press w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 font-semibold px-4 py-3.5 rounded-xl border border-slate-800/60 text-sm"
-              >
-                <span>Guia da Banca</span>
+                <Server size={14} />
+                <span>Swagger OpenAPI</span>
+                <ExternalLink size={12} className="text-slate-400" />
               </a>
             </div>
-
-            {/* Micro Provas / Destaques */}
-            <div className="pt-4 flex items-center justify-center gap-6 text-xs text-slate-400 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-emerald-400" /> Multi-Tenant por Empresa
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-emerald-400" /> Máquina de Estados Estrita
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={15} className="text-emerald-400" /> 100% Dockerizado
-              </span>
-            </div>
           </div>
 
-          {/* PREVIEW DO COCKPIT EM MOCKUP DE ALTA FIDELIDADE */}
-          <div className="mt-14 max-w-5xl mx-auto rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 p-2 sm:p-3 border border-slate-800/90 shadow-2xl shadow-blue-950/40 relative ring-1 ring-white/5">
-            {/* Header da Janela */}
-            <div className="h-9 bg-slate-900/90 rounded-t-xl px-4 flex items-center justify-between border-b border-slate-800 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-[11px] text-slate-400">fieldops.up.railway.app/dashboard</span>
-              </div>
-              <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Telemetria Ativa
-              </span>
-            </div>
-
-            {/* Cockpit Preview Grid */}
-            <div className="p-4 sm:p-6 bg-slate-950/90 rounded-b-xl space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Pontualidade (BI)</span>
-                  <span className="text-xl sm:text-2xl font-black text-blue-400 block mt-0.5 tabular-nums">98.4%</span>
-                  <span className="text-[10px] text-emerald-400 flex items-center gap-0.5 mt-0.5 tabular-nums">
-                    <TrendingUp size={11} /> +4.2% vs mês anterior
-                  </span>
-                </div>
-                <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Satisfação CSAT</span>
-                  <span className="text-xl sm:text-2xl font-black text-amber-400 block mt-0.5 tabular-nums">4.9 ⭐</span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">Avaliações dos clientes</span>
-                </div>
-                <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Em Campo Agora</span>
-                  <span className="text-xl sm:text-2xl font-black text-emerald-400 block mt-0.5 tabular-nums">5 Técnicos</span>
-                  <span className="text-[10px] text-emerald-400/80 block mt-0.5">São Paulo (SP)</span>
-                </div>
-                <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Digital Twin 24h</span>
-                  <span className="text-xl sm:text-2xl font-black text-purple-400 block mt-0.5">Ativo</span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">Ciclos automáticos</span>
-                </div>
-              </div>
-
-              {/* Linha Simulada de Chamados em Campo com Feedback Físico */}
-              <div className="p-3.5 bg-slate-900/50 border border-slate-800/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg shrink-0">
-                    <Truck size={18} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-200">O.S. #7 • Torre Faria Lima Plaza</span>
-                      <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-[10px] font-bold uppercase">
-                        Em Trânsito
-                      </span>
-                    </div>
-                    <p className="text-2xs text-slate-400 mt-0.5 tabular-nums">
-                      Técnico: Felipe Rocha • Distância calculada: 1.5 km • Tempo est.: 10 min
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => navigate('/login')}
-                  className="btn-press px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-xs font-semibold cursor-pointer self-end sm:self-auto"
-                >
-                  Ver no Mapa ➔
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. BARRA DE MÉTRICAS & VALOR DE MERCADO COM NÚMEROS TABULARES */}
-      <section id="solucao" className="border-y border-slate-800/80 bg-slate-900/40 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-            <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-blue-400 block tabular-nums">-40%</span>
-              <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Tempo em Trânsito</span>
-              <span className="text-2xs text-slate-500 block mt-0.5">Despacho por proximidade Haversine</span>
-            </div>
-            <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-emerald-400 block tabular-nums">100%</span>
-              <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Auditoria Imutável</span>
-              <span className="text-2xs text-slate-500 block mt-0.5">Check-in, check-out e laudo digital</span>
-            </div>
-            <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-purple-400 block">Zero</span>
-              <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Chamados Perdidos</span>
-              <span className="text-2xs text-slate-500 block mt-0.5">Roteiro encadeado do dia no mobile</span>
-            </div>
-            <div>
-              <span className="text-2xl sm:text-4xl font-extrabold text-amber-400 block tabular-nums">4.9/5.0</span>
-              <span className="text-xs sm:text-sm text-slate-300 font-semibold block mt-1">Satisfação dos Clientes</span>
-              <span className="text-2xs text-slate-500 block mt-0.5">Pesquisa CSAT instantânea via link</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. SHOWCASE DE MÓDULOS (SEGMENTED CONTROL NO ESTILO EMIL KOWALSKI) */}
-      <section id="modulos" className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
-            <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Ecossistema Completo</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
-              Uma Plataforma, Todos os Ângulos da Operação
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-[55ch] mx-auto leading-relaxed">
-              Do planejamento na base à execução na ponta, o FieldOps integra despachantes, técnicos e o cliente final em uma única experiência fluida.
-            </p>
-          </div>
-
-          {/* Segmented Control Unificado */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 inline-flex flex-wrap gap-1 shadow-inner">
-              {modulos.map((m) => {
-                const Icon = m.icon;
-                const isSelected = m.id === activeTab;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setActiveTab(m.id)}
-                    className={`btn-press inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25 ring-1 ring-white/10'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <Icon size={15} />
-                    <span>{m.titulo}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Card Detalhado do Módulo Ativo com Transição Suave */}
-          <div className="bg-slate-900/60 border border-slate-800/90 rounded-3xl p-6 sm:p-10 shadow-xl ring-1 ring-white/5 transition-opacity duration-200 ease-out">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              {/* Esquerda: Explicação */}
-              <div className="lg:col-span-7 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <span>{moduloAtivo.badge}</span>
-                </div>
-
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  {moduloAtivo.titulo}
-                </h3>
-
-                <p className="text-sm text-slate-300 leading-relaxed max-w-[60ch]">
-                  {moduloAtivo.desc}
-                </p>
-
-                <div className="space-y-2.5 pt-2">
-                  {moduloAtivo.destaques.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                      <div className="p-0.5 rounded-full bg-emerald-500/20 text-emerald-400 mt-0.5 shrink-0">
-                        <Check size={13} />
-                      </div>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 flex items-center gap-3">
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="btn-press inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
-                  >
-                    <span>Experimentar na Demonstração</span>
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Direita: Preview Card com Estatísticas */}
-              <div className="lg:col-span-5 bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 space-y-5 shadow-xl">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Métricas Operacionais
-                  </span>
-                  <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                    Ao Vivo
-                  </span>
-                </div>
-
-                <div className="space-y-3.5">
-                  {moduloAtivo.previewStats.map((st, sIdx) => (
-                    <div key={sIdx} className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between">
-                      <span className="text-xs text-slate-400 font-medium">{st.label}</span>
-                      <span className={`text-sm font-bold font-mono tabular-nums ${st.cor}`}>{st.val}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-3 bg-blue-950/30 border border-blue-900/40 rounded-xl text-2xs text-blue-300/80">
-                  💡 <strong>Dica para a Banca:</strong> O sistema possui botões de acesso rápido na tela de login para alternar entre a visão Desktop e Mobile instantaneamente.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. COMO FUNCIONA (PIPELINE DA MÁQUINA DE ESTADOS) */}
-      <section id="como-funciona" className="border-t border-slate-800/80 bg-slate-900/30 py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-            <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Governança & SLA</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
-              Máquina de Estados Finita e Auditável
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-[60ch] mx-auto leading-relaxed">
-              Cada transição de estado é validada estritamente pelo backend Spring Boot, impedindo pulos de etapa e garantindo rastreabilidade jurídica com data, hora e responsável.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {[
-              { passo: '1. Aberta', desc: 'Chamado criado pelo gestor ou cliente com endereço e ativo vinculado.', cor: 'border-amber-500/40 bg-amber-500/5' },
-              { passo: '2. Atribuída', desc: 'Despacho inteligente pelo cálculo de menor distância Haversine.', cor: 'border-blue-500/40 bg-blue-500/5' },
-              { passo: '3. Em Trânsito', desc: 'Técnico inicia o deslocamento no app. Link público emitido ao cliente.', cor: 'border-indigo-500/40 bg-indigo-500/5' },
-              { passo: '4. Atendimento', desc: 'Check-in no local. Inspeção técnica e checklist do equipamento.', cor: 'border-purple-500/40 bg-purple-500/5' },
-              { passo: '5. Concluída', desc: 'Laudo técnico preenchido, assinatura touch coletada e avaliação CSAT.', cor: 'border-emerald-500/40 bg-emerald-500/5' }
-            ].map((st, idx) => (
-              <div key={idx} className={`p-5 rounded-2xl border ${st.cor} flex flex-col justify-between space-y-3`}>
-                <div className="space-y-1.5">
-                  <span className="text-xs font-bold text-white block">{st.passo}</span>
-                  <p className="text-2xs text-slate-400 leading-relaxed">{st.desc}</p>
-                </div>
-                <span className="text-[10px] font-mono text-slate-500 font-semibold block tabular-nums">Passo 0{idx + 1}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 6. ARQUITETURA DE SOFTWARE & ENGENHARIA */}
-      <section id="arquitetura" className="py-20 lg:py-28">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-14">
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Engenharia de Software</span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-[-0.03em]">
-              Stack Tecnológica & Padrões Arquiteturais
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-[55ch] mx-auto leading-relaxed">
-              Construído com base nas melhores práticas do mercado para garantir estabilidade, segurança e facilidade de implantação.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Backend */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-blue-500/25 transition-all">
-              <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl w-fit">
-                <Server size={22} />
-              </div>
-              <h4 className="text-base font-bold text-white">Backend Spring Boot 4</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Java 21 com Spring Security, JWT stateless, Spring Data JPA, Hibernate, agendador de tarefas <code className="text-blue-300">@Scheduled</code> e migrações Flyway.
-              </p>
-              <div className="pt-2 flex flex-wrap gap-1.5">
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Java 21</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Spring Boot</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">JWT Bearer</span>
-              </div>
-            </div>
-
-            {/* Frontend */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-indigo-500/25 transition-all">
-              <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl w-fit">
-                <Code2 size={22} />
-              </div>
-              <h4 className="text-base font-bold text-white">Frontend React 19 + Vite</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Single Page Application moderna com Tailwind CSS, Leaflet Maps, Lucide Icons, Canvas Signature Pad e roteamento protegido por perfil RBAC.
-              </p>
-              <div className="pt-2 flex flex-wrap gap-1.5">
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">React 19</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Tailwind CSS</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Leaflet</span>
-              </div>
-            </div>
-
-            {/* DevOps & Banco */}
-            <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-4 ring-1 ring-white/5 hover:ring-emerald-500/25 transition-all">
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl w-fit">
-                <Database size={22} />
-              </div>
-              <h4 className="text-base font-bold text-white">PostgreSQL & Docker</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Banco relacional PostgreSQL 15, Neon Serverless na nuvem, Dockerfiles multi-stage e Docker Compose unificado para subir toda a stack com 1 comando.
-              </p>
-              <div className="pt-2 flex flex-wrap gap-1.5">
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">PostgreSQL</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Docker Compose</span>
-                <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-2xs font-mono">Railway</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. GUIA DA BANCA AVALIADORA (CREDENCIAIS & ACESSO RÁPIDO) */}
-      <section id="banca" className="border-t border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-slate-950 py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-tr from-slate-900 via-slate-900 to-blue-950/40 border border-blue-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden ring-1 ring-white/5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-3 max-w-xl">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <Star size={14} />
-                  <span>Área de Avaliação Acadêmica (TCC 2026)</span>
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  Acesso Imediato para a Banca
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Utilize as credenciais de teste abaixo para validar todos os módulos. O banco já possui dados pré-carregados e o Modo Simulação pronto para disparo.
-                </p>
-              </div>
-
-              <div className="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2.5">
-                <button
-                  onClick={() => navigate('/login')}
-                  className="btn-press inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-5 py-3 rounded-xl text-xs sm:text-sm shadow-lg shadow-blue-500/20 cursor-pointer"
-                >
-                  <Zap size={16} />
-                  <span>Ir para Tela de Login</span>
-                </button>
-
-                <a
-                  href="https://apifieldopss.up.railway.app/swagger-ui/index.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-press inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2.5 rounded-xl text-xs transition-colors border border-slate-700"
-                >
-                  <Server size={15} />
-                  <span>Abrir Swagger UI</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Caixa de Credenciais Prontas */}
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Gestor */}
-              <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+          {/* Cards Rápidos de Login (Gestor vs Técnico) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
+            {/* Card Gestor */}
+            <div className="p-4 sm:p-5 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between space-y-3 hover:border-blue-400/50 transition-colors">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Acesso Gestor (Admin)</span>
+                  <span className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Building2 size={14} /> Perfil Gestor Operacional (Desktop)
+                  </span>
                   <button
                     onClick={() => copiarTexto('gestor@fieldops.com', 'gestor')}
-                    className="btn-press text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-1 rounded-md border border-slate-800"
+                    className="btn-press text-2xs text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs font-semibold"
                   >
-                    {copiedGestor ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    {copiedGestor ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                     <span>{copiedGestor ? 'Copiado!' : 'Copiar E-mail'}</span>
                   </button>
                 </div>
-                <div className="font-mono text-xs text-slate-300 space-y-1">
+                <div className="font-mono text-xs text-slate-800 space-y-0.5 pt-1">
                   <div><strong>E-mail:</strong> gestor@fieldops.com</div>
                   <div><strong>Senha:</strong> 123456</div>
                 </div>
-                <p className="text-2xs text-slate-500">
-                  Acesso ao Cockpit Desktop, Mapa em Tempo Real, Gantt, Cadastros e Modo Simulação.
+                <p className="text-2xs text-slate-500 pt-1 leading-relaxed">
+                  Acesso ao Cockpit Executivo, Mapa ao Vivo com Leaflet, Linha do Tempo Gantt com navegação horária e Simulador Digital Twin 24h.
                 </p>
               </div>
+            </div>
 
-              {/* Técnico */}
-              <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+            {/* Card Técnico */}
+            <div className="p-4 sm:p-5 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between space-y-3 hover:border-emerald-400/50 transition-colors">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Acesso Técnico (Mobile)</span>
+                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Smartphone size={14} /> Perfil Técnico de Campo (Mobile)
+                  </span>
                   <button
                     onClick={() => copiarTexto('tecnico@fieldops.com', 'tecnico')}
-                    className="btn-press text-2xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-1 rounded-md border border-slate-800"
+                    className="btn-press text-2xs text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs font-semibold"
                   >
-                    {copiedTecnico ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                    {copiedTecnico ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                     <span>{copiedTecnico ? 'Copiado!' : 'Copiar E-mail'}</span>
                   </button>
                 </div>
-                <div className="font-mono text-xs text-slate-300 space-y-1">
+                <div className="font-mono text-xs text-slate-800 space-y-0.5 pt-1">
                   <div><strong>E-mail:</strong> tecnico@fieldops.com</div>
                   <div><strong>Senha:</strong> 123456</div>
                 </div>
-                <p className="text-2xs text-slate-500">
-                  Redirecionamento direto para a visão de campo mobile, roadmap do dia e assinatura touch.
+                <p className="text-2xs text-slate-500 pt-1 leading-relaxed">
+                  Redirecionamento automático para a visão do técnico de campo no smartphone, roteiro do dia, check-in e assinatura touch.
                 </p>
               </div>
             </div>
@@ -696,15 +370,251 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 8. FOOTER */}
-      <footer className="border-t border-slate-900 bg-slate-950 py-12 text-xs text-slate-500">
+      {/* =========================================================================
+          3. BARRA DE MÉTRICAS & INDICADORES DE IMPACTO
+      ========================================================================= */}
+      <section id="solucao" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-2xs">
+            <span className="text-2xl sm:text-3xl font-black text-blue-600 block tabular-nums">-40%</span>
+            <span className="text-xs sm:text-sm text-slate-800 font-bold block mt-1">Tempo em Trânsito</span>
+            <span className="text-2xs text-slate-500 block mt-0.5">Alocação por proximidade Haversine</span>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-2xs">
+            <span className="text-2xl sm:text-3xl font-black text-emerald-600 block tabular-nums">100%</span>
+            <span className="text-xs sm:text-sm text-slate-800 font-bold block mt-1">Auditoria Imutável</span>
+            <span className="text-2xs text-slate-500 block mt-0.5">Check-in, checkout e laudo técnico</span>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-2xs">
+            <span className="text-2xl sm:text-3xl font-black text-purple-600 block">Zero</span>
+            <span className="text-xs sm:text-sm text-slate-800 font-bold block mt-1">Chamados Perdidos</span>
+            <span className="text-2xs text-slate-500 block mt-0.5">Roadmap diário encadeado no mobile</span>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-2xs">
+            <span className="text-2xl sm:text-3xl font-black text-amber-500 block tabular-nums">4.9 ⭐</span>
+            <span className="text-xs sm:text-sm text-slate-800 font-bold block mt-1">Satisfação dos Clientes</span>
+            <span className="text-2xs text-slate-500 block mt-0.5">Pesquisa CSAT instantânea via link</span>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          4. VITRINE INTERATIVA DOS MÓDULOS OPERACIONAIS
+      ========================================================================= */}
+      <section id="modulos" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5 mb-10">
+          <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Ecossistema FieldOps</span>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Uma Plataforma, Todos os Ângulos da Operação
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Do planejamento na base à execução em campo, o FieldOps integra despachantes, técnicos e o cliente final em uma única experiência fluida.
+          </p>
+        </div>
+
+        {/* Segmented Control Unificado */}
+        <div className="flex justify-center mb-8 overflow-x-auto pb-2">
+          <div className="bg-slate-200/80 p-1.5 rounded-2xl inline-flex gap-1 shadow-inner">
+            {modulos.map((m) => {
+              const Icon = m.icon;
+              const isSelected = m.id === activeTab;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setActiveTab(m.id)}
+                  className={`btn-press inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    isSelected
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-300/40'
+                  }`}
+                >
+                  <Icon size={14} className={isSelected ? 'text-blue-600' : 'text-slate-500'} />
+                  <span>{m.titulo}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Card Detalhado do Módulo Ativo */}
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-10 shadow-sm transition-all">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Esquerda: Explicação */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                <span>{moduloAtivo.badge}</span>
+              </div>
+
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                {moduloAtivo.titulo}
+              </h3>
+
+              <p className="text-sm text-slate-600 leading-relaxed max-w-[60ch]">
+                {moduloAtivo.desc}
+              </p>
+
+              <div className="space-y-2 pt-2">
+                {moduloAtivo.destaques.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700">
+                    <div className="p-0.5 rounded-full bg-emerald-100 text-emerald-700 mt-0.5 shrink-0">
+                      <Check size={12} />
+                    </div>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-4 flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="btn-press inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs cursor-pointer"
+                >
+                  <span>Experimentar na Demonstração</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Direita: Preview Card com Estatísticas */}
+            <div className="lg:col-span-5 bg-slate-900 text-white border border-slate-800 rounded-2xl p-6 space-y-5 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Métricas Operacionais
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                  Ao Vivo
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {moduloAtivo.previewStats.map((st, sIdx) => (
+                  <div key={sIdx} className="p-3 bg-slate-800/80 border border-slate-700/80 rounded-xl flex items-center justify-between">
+                    <span className="text-xs text-slate-300 font-medium">{st.label}</span>
+                    <span className={`text-sm font-bold font-mono tabular-nums ${st.cor}`}>{st.val}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 bg-blue-950/40 border border-blue-900/50 rounded-xl text-2xs text-blue-300">
+                💡 <strong>Demonstração Integrada:</strong> Os botões de acesso rápido na tela de login permitem alternar entre a visão Desktop e Mobile instantaneamente.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          5. COMO FUNCIONA (PIPELINE DA MÁQUINA DE ESTADOS)
+      ========================================================================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5 mb-12">
+          <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Governança & SLA</span>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Máquina de Estados Finita e Auditável
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Cada transição de estado é validada pelo backend Spring Boot, impedindo pulos de etapa e garantindo rastreabilidade jurídica com data, hora e responsável.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5">
+          {[
+            { passo: '1. Aberta', desc: 'Chamado criado pelo gestor ou cliente com endereço e ativo vinculado.', cor: 'border-amber-200 bg-amber-50/70 text-amber-900' },
+            { passo: '2. Atribuída', desc: 'Despacho inteligente pelo cálculo de menor distância Haversine.', cor: 'border-blue-200 bg-blue-50/70 text-blue-900' },
+            { passo: '3. Em Trânsito', desc: 'Técnico inicia o deslocamento no app. Link público emitido ao cliente.', cor: 'border-indigo-200 bg-indigo-50/70 text-indigo-900' },
+            { passo: '4. Atendimento', desc: 'Check-in no local. Inspeção técnica e checklist do equipamento.', cor: 'border-purple-200 bg-purple-50/70 text-purple-900' },
+            { passo: '5. Concluída', desc: 'Laudo técnico preenchido, assinatura touch coletada e avaliação CSAT.', cor: 'border-emerald-200 bg-emerald-50/70 text-emerald-900' }
+          ].map((st, idx) => (
+            <div key={idx} className={`p-4 sm:p-5 rounded-2xl border ${st.cor} flex flex-col justify-between space-y-2.5 shadow-2xs`}>
+              <div className="space-y-1">
+                <span className="text-xs font-bold block">{st.passo}</span>
+                <p className="text-2xs leading-relaxed opacity-90">{st.desc}</p>
+              </div>
+              <span className="text-[10px] font-mono font-bold block tabular-nums opacity-60">Passo 0{idx + 1}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* =========================================================================
+          6. ARQUITETURA TÉCNICA DO PROJETO
+      ========================================================================= */}
+      <section id="arquitetura" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
+        <div className="text-center max-w-2xl mx-auto space-y-2.5 mb-12">
+          <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Engenharia de Software</span>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Stack Tecnológica & Padrões Arquiteturais
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Construído com base nas melhores práticas do mercado para garantir estabilidade, segurança e facilidade de implantação.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Backend */}
+          <div className="p-6 bg-white border border-slate-200/80 rounded-2xl space-y-3 shadow-2xs hover:shadow-md transition-shadow">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit">
+              <Server size={20} />
+            </div>
+            <h4 className="text-base font-bold text-slate-900">Backend Spring Boot 4</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Java 21 com Spring Security, JWT stateless, Spring Data JPA, Hibernate, agendador de tarefas <code className="text-blue-600">@Scheduled</code> e migrações Flyway.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Java 21</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Spring Boot</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">JWT Bearer</span>
+            </div>
+          </div>
+
+          {/* Frontend */}
+          <div className="p-6 bg-white border border-slate-200/80 rounded-2xl space-y-3 shadow-2xs hover:shadow-md transition-shadow">
+            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl w-fit">
+              <Code2 size={20} />
+            </div>
+            <h4 className="text-base font-bold text-slate-900">Frontend React 19 + Vite</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Single Page Application moderna com Tailwind CSS, Leaflet Maps, Lucide Icons, Canvas Signature Pad e roteamento protegido por perfil RBAC.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">React 19</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Tailwind CSS</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Leaflet</span>
+            </div>
+          </div>
+
+          {/* DevOps & Banco */}
+          <div className="p-6 bg-white border border-slate-200/80 rounded-2xl space-y-3 shadow-2xs hover:shadow-md transition-shadow">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-fit">
+              <Database size={20} />
+            </div>
+            <h4 className="text-base font-bold text-slate-900">PostgreSQL & Docker</h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Banco relacional PostgreSQL 15, Neon Serverless na nuvem, Dockerfiles multi-stage e Docker Compose unificado para subir toda a stack.
+            </p>
+            <div className="pt-2 flex flex-wrap gap-1.5">
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">PostgreSQL</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Docker</span>
+              <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-2xs font-mono font-semibold">Railway</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          7. RODAPÉ INSTITUCIONAL
+      ========================================================================= */}
+      <footer className="border-t border-slate-200 bg-white py-10 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-blue-600 rounded-lg text-white">
               <Layers size={16} />
             </div>
-            <span className="font-bold text-slate-300">FieldOps</span>
-            <span>• Projeto de Conclusão de Curso 2026</span>
+            <span className="font-bold text-slate-900">FieldOps</span>
+            <span>• Projeto de Graduação Full Stack SaaS 2026</span>
           </div>
 
           <div className="flex items-center gap-6">
@@ -712,7 +622,7 @@ export default function LandingPage() {
               href="https://github.com/SaaS-FullStack-2026/saas-backend"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-300 transition-colors"
+              className="hover:text-blue-600 transition-colors"
             >
               GitHub Backend
             </a>
@@ -720,7 +630,7 @@ export default function LandingPage() {
               href="https://github.com/SaaS-FullStack-2026/saas-frontend"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-300 transition-colors"
+              className="hover:text-blue-600 transition-colors"
             >
               GitHub Frontend
             </a>
@@ -728,16 +638,16 @@ export default function LandingPage() {
               href="https://apifieldopss.up.railway.app/swagger-ui/index.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-300 transition-colors"
+              className="hover:text-blue-600 transition-colors"
             >
               Swagger API
             </a>
-            <Link to="/login" className="hover:text-blue-400 transition-colors">
+            <Link to="/login" className="hover:text-blue-600 font-semibold transition-colors">
               Login
             </Link>
           </div>
 
-          <div className="text-2xs text-slate-600">
+          <div className="text-2xs text-slate-400">
             Licença MIT • Desenvolvido com React 19 & Spring Boot 4
           </div>
         </div>
