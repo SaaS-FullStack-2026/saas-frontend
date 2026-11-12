@@ -98,16 +98,51 @@ function criarIconeSede() {
 
 // Ícone customizado de Colaborador em Campo com status dinâmico
 function criarIconeTecnico(tecnico, statusInfo, isSelecionado) {
+  const isDeslocamento = statusInfo.tipo === 'EM_DESLOCAMENTO';
   const corBorda = statusInfo.tipo === 'EM_ATENDIMENTO' 
     ? '#9333ea' 
-    : statusInfo.tipo === 'EM_DESLOCAMENTO' 
+    : isDeslocamento 
     ? '#6366f1' 
     : statusInfo.tipo === 'CONCLUIDA'
     ? '#059669'
     : '#2563eb';
 
-  const isPulsando = statusInfo.tipo === 'EM_ATENDIMENTO' || statusInfo.tipo === 'EM_DESLOCAMENTO';
+  const isPulsando = statusInfo.tipo === 'EM_ATENDIMENTO' || isDeslocamento;
   const inicial = (tecnico?.nome || 'T').charAt(0).toUpperCase();
+  const primeiroNome = (tecnico?.nome || 'Técnico').split(' ')[0];
+
+  // Se estiver em deslocamento, exibe o marcador especial com etiqueta flutuante do nome do colaborador
+  if (isDeslocamento) {
+    return L.divIcon({
+      className: 'custom-tecnico-deslocamento-marker',
+      html: `
+        <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; cursor: pointer;">
+          <!-- Halo Pulsante Ativo -->
+          <span style="position: absolute; width: 52px; height: 52px; border-radius: 9999px; background-color: #6366f1; opacity: 0.35; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
+          
+          <!-- Etiqueta Flutuante Permanente com Nome do Colaborador -->
+          <div style="position: absolute; bottom: 42px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: #0f172a; color: white; padding: 2.5px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 1.5px solid #818cf8; pointer-events: none; display: flex; align-items: center; gap: 4px; font-family: sans-serif;">
+            <span style="color: #fbbf24;">🚗</span>
+            <span>${primeiroNome}</span>
+            <span style="color: #a5b4fc; font-weight: 600;">• ${statusInfo.tempoEstimadoMin || 20}m</span>
+          </div>
+
+          <!-- Botão Central do Carro com Inicial -->
+          <div style="background: linear-gradient(135deg, #4338ca, #312e81); color: white; width: 36px; height: 36px; border-radius: 9999px; border: 3px solid #a5b4fc; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; font-family: sans-serif; ${isSelecionado ? 'transform: scale(1.15); border-color: #38bdf8;' : ''}">
+            🚗
+          </div>
+
+          <!-- Micro Badge de Trânsito -->
+          <div style="position: absolute; bottom: 1px; right: 1px; background: #fbbf24; color: #1e1b4b; border-radius: 9999px; width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1.5px solid white;">
+            ⚡
+          </div>
+        </div>
+      `,
+      iconSize: [52, 52],
+      iconAnchor: [26, 26],
+      popupAnchor: [0, -26]
+    });
+  }
 
   return L.divIcon({
     className: 'custom-tecnico-marker',
@@ -118,7 +153,7 @@ function criarIconeTecnico(tecnico, statusInfo, isSelecionado) {
           ${inicial}
         </div>
         <div style="position: absolute; bottom: 0px; right: 0px; background: white; border-radius: 9999px; width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); border: 1px solid #cbd5e1;">
-          ${statusInfo.tipo === 'EM_DESLOCAMENTO' ? '🚗' : statusInfo.tipo === 'EM_ATENDIMENTO' ? '⚡' : '📍'}
+          ${statusInfo.tipo === 'EM_ATENDIMENTO' ? '⚡' : '📍'}
         </div>
       </div>
     `,
@@ -314,9 +349,42 @@ export default function MapaPage() {
       }
 
       if (emDeslocamento) {
+        // Ponto de partida: última OS concluída no dia ou Sede Operacional
+        let origemPosicao = COORDENADAS_SEDE;
+        let origemNome = 'Sede Operacional (Base de Despacho)';
+        if (concluidas.length > 0) {
+          const ultimaConcluida = concluidas[concluidas.length - 1];
+          origemPosicao = ultimaConcluida.posicao;
+          origemNome = `${ultimaConcluida.cliente?.nome || 'Cliente Anterior'} (OS #${ultimaConcluida.id})`;
+        }
+
+        const destinoPosicao = emDeslocamento.posicao;
+        const destinoNome = `${emDeslocamento.cliente?.nome || 'Cliente'} (OS #${emDeslocamento.id})`;
+
+        // Posição do veículo: se houver coordenada GPS do técnico diferente da sede e do destino, usa-a
+        let posicaoAtual = null;
+        if (t.latitude && t.longitude && (Math.abs(t.latitude - destinoPosicao[0]) > 0.0004 || Math.abs(t.longitude - destinoPosicao[1]) > 0.0004)) {
+          posicaoAtual = [t.latitude, t.longitude];
+        } else {
+          // Interpolação intermediária realista ao longo da rota (52% do percurso com leve desvio para simular trajeto viário)
+          const progresso = 0.52;
+          const latIntermediaria = origemPosicao[0] + (destinoPosicao[0] - origemPosicao[0]) * progresso;
+          const lngIntermediaria = origemPosicao[1] + (destinoPosicao[1] - origemPosicao[1]) * progresso;
+          posicaoAtual = [latIntermediaria, lngIntermediaria];
+        }
+
+        const tempoEstimadoMin = emDeslocamento.tempoDeslocamentoMinutos || 25;
+        const distanciaEstimadaKm = emDeslocamento.distanciaDeslocamentoKm || 4.8;
+
         return {
           tecnico: t,
-          posicao: emDeslocamento.posicao,
+          posicao: posicaoAtual,
+          origemPosicao,
+          origemNome,
+          destinoPosicao,
+          destinoNome,
+          tempoEstimadoMin,
+          distanciaEstimadaKm,
           status: 'EM_DESLOCAMENTO',
           textoStatus: `A caminho de: ${emDeslocamento.cliente?.nome || 'Cliente'} (OS #${emDeslocamento.id})`,
           tipo: 'EM_DESLOCAMENTO',
@@ -561,6 +629,14 @@ export default function MapaPage() {
             <MapPin size={12} />
             <span>Chamados ({carregando ? '...' : ordensComCoordenadas.length})</span>
           </button>
+
+          {/* Badge Informativo de Deslocamento Ativo */}
+          {tecnicosComPosicao.filter((t) => t.tipo === 'EM_DESLOCAMENTO').length > 0 && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span>🚗</span>
+              <span>{tecnicosComPosicao.filter((t) => t.tipo === 'EM_DESLOCAMENTO').length} em Trânsito</span>
+            </span>
+          )}
         </div>
 
         {/* Seletor de Rota por Colaborador */}
@@ -673,9 +749,27 @@ export default function MapaPage() {
               />
             )}
 
-            {/* 3. Marcadores dos Colaboradores em Campo */}
+            {/* 3. Traçado de Deslocamento Ativo em Tempo Real (Origem -> Veículo -> Destino) */}
+            {exibirTecnicos && tecnicosComPosicao
+              .filter((item) => item.tipo === 'EM_DESLOCAMENTO' && item.origemPosicao && item.destinoPosicao)
+              .map((item) => (
+                <Polyline
+                  key={`deslocamento-ativo-${item.tecnico.id}`}
+                  positions={[item.origemPosicao, item.posicao, item.destinoPosicao]}
+                  pathOptions={{
+                    color: '#6366f1',
+                    weight: 3.5,
+                    opacity: 0.85,
+                    dashArray: '6, 8',
+                    lineJoin: 'round'
+                  }}
+                />
+              ))}
+
+            {/* 4. Marcadores dos Colaboradores em Campo */}
             {exibirTecnicos && tecnicosComPosicao.map((item) => {
               const isSelecionado = tecnicoRotaSelecionado?.id === item.tecnico.id;
+              const isDeslocamento = item.tipo === 'EM_DESLOCAMENTO';
 
               return (
                 <Marker
@@ -684,47 +778,82 @@ export default function MapaPage() {
                   icon={criarIconeTecnico(item.tecnico, item, isSelecionado)}
                 >
                   <Popup>
-                    <div className="p-1 space-y-2 min-w-[220px] text-slate-800">
+                    <div className="p-1 space-y-2 min-w-[240px] text-slate-800">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <div className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
                             {item.tecnico.nome?.charAt(0) || 'T'}
                           </div>
                           <span className="font-bold text-xs text-slate-900">{item.tecnico.nome}</span>
                         </div>
                         <span 
-                          className="text-[9px] font-bold px-1.5 py-0.2 rounded uppercase"
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-1"
                           style={{ backgroundColor: `${item.cor}20`, color: item.cor }}
                         >
-                          {item.status.replace('_', ' ')}
+                          {isDeslocamento ? '🚗 A CAMINHO' : item.status.replace('_', ' ')}
                         </span>
                       </div>
 
-                      <div className="text-2xs text-slate-600 space-y-1">
-                        <p className="font-semibold flex items-center gap-1">
-                          <MapPin size={11} className="text-slate-400" />
-                          <span>{item.textoStatus}</span>
-                        </p>
-                        <p className="text-slate-500">
-                          {item.ordensHoje.length} ordens de serviço agendadas para hoje.
-                        </p>
-                      </div>
+                      {/* Caixa de Detalhes da Rota em Deslocamento */}
+                      {isDeslocamento ? (
+                        <div className="bg-indigo-50 border border-indigo-200/80 rounded-xl p-2.5 text-2xs space-y-1.5 text-indigo-950">
+                          <div className="flex items-center justify-between font-bold text-indigo-800 pb-1 border-b border-indigo-100">
+                            <span className="flex items-center gap-1">🚗 Em Deslocamento Urbano</span>
+                            <span className="text-indigo-600 font-mono">~{item.tempoEstimadoMin} min</span>
+                          </div>
+                          <div>
+                            <span className="text-indigo-400 font-semibold block text-[9px] uppercase">Partida:</span>
+                            <span className="font-medium text-slate-800 truncate block">{item.origemNome}</span>
+                          </div>
+                          <div>
+                            <span className="text-indigo-400 font-semibold block text-[9px] uppercase">Destino:</span>
+                            <span className="font-medium text-slate-800 truncate block">{item.destinoNome}</span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-indigo-100 text-[10px] text-indigo-700 font-semibold">
+                            <span>Distância da rota:</span>
+                            <span>~{item.distanciaEstimadaKm.toFixed(1)} km</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-2xs text-slate-600 space-y-1">
+                          <p className="font-semibold flex items-center gap-1">
+                            <MapPin size={11} className="text-slate-400" />
+                            <span>{item.textoStatus}</span>
+                          </p>
+                          <p className="text-slate-500">
+                            {item.ordensHoje.length} ordens de serviço agendadas para hoje.
+                          </p>
+                        </div>
+                      )}
 
-                      <button
-                        type="button"
-                        onClick={() => setTecnicoRotaSelecionado(item.tecnico)}
-                        className="w-full mt-2 inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs active:scale-95"
-                      >
-                        <RouteIcon size={13} />
-                        <span>{isSelecionado ? 'Rota Já Ativa' : 'Ver Rota do Dia no Mapa'}</span>
-                      </button>
+                      <div className="pt-1 space-y-1.5">
+                        {item.osAtual && (
+                          <button
+                            type="button"
+                            onClick={() => setOsSelecionada(item.osAtual)}
+                            className="w-full inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer shadow-2xs active:scale-95"
+                          >
+                            <Eye size={13} />
+                            <span>Ver O.S. #{item.osAtual.id} em Andamento</span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setTecnicoRotaSelecionado(item.tecnico)}
+                          className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2 py-1.5 rounded-lg text-xs transition-colors cursor-pointer active:scale-95 border border-slate-200"
+                        >
+                          <RouteIcon size={13} className="text-blue-600" />
+                          <span>{isSelecionado ? 'Rota Já Ativa' : 'Traçar Todas Paradas do Dia'}</span>
+                        </button>
+                      </div>
                     </div>
                   </Popup>
                 </Marker>
               );
             })}
 
-            {/* 4. Marcadores das Ordens de Serviço */}
+            {/* 5. Marcadores das Ordens de Serviço */}
             {exibirOrdens && ordensExibidas.map((o) => {
               const statusKey = o.status || 'ABERTA';
               const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.ABERTA;
