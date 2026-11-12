@@ -767,8 +767,8 @@ export default function LinhaDoTempoPage() {
         <div ref={timelineScrollRef} className="overflow-x-auto relative">
           <div style={{ minWidth: `${280 + HORAS_TIMELINE.length * LARGURA_HORA_PX}px` }}>
             {/* Header das Horas */}
-            <div className="flex items-center border-b border-slate-200 bg-slate-100/70 font-semibold text-xs text-slate-600 sticky top-0 z-20">
-              <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
+            <div className="flex items-center border-b border-slate-200 bg-slate-100 font-semibold text-xs text-slate-600 sticky top-0 z-30">
+              <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider sticky left-0 top-0 z-40 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                 Colaboradores & Localização ({tecnicos.length})
               </div>
 
@@ -803,7 +803,7 @@ export default function LinhaDoTempoPage() {
               <div className="divide-y divide-slate-100 animate-pulse">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="flex min-h-[96px]">
-                    <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-50 space-y-2 sticky left-0 z-20 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
+                    <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-50 space-y-2 sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-200" />
                         <div className="space-y-1 flex-1">
@@ -842,7 +842,7 @@ export default function LinhaDoTempoPage() {
                   return (
                     <div key={tecnico.id} className="flex min-h-[96px] hover:bg-slate-50/50 transition-colors">
                       {/* Painel Fixo do Técnico (Esquerda) */}
-                      <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 flex flex-col justify-between bg-white sticky left-0 z-20 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
+                      <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 flex flex-col justify-between bg-white sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
@@ -1016,7 +1016,7 @@ export default function LinhaDoTempoPage() {
                                 onDragStart={(e) => handleDragStart(e, o)}
                                 onClick={() => setOsSelecionada(o)}
                                 title={atraso.atrasada ? `${atraso.mensagem} | Clique para ver detalhes` : undefined}
-                                className={`absolute rounded-xl border p-2 shadow-xs hover:shadow-md cursor-grab active:cursor-grabbing transition-all z-20 flex flex-col justify-between overflow-hidden group ${corStatus}`}
+                                className={`absolute rounded-xl border p-2 shadow-xs hover:shadow-md cursor-grab active:cursor-grabbing transition-all z-10 hover:z-20 flex flex-col justify-between overflow-hidden group ${corStatus}`}
                               >
                                 <div className="flex items-center justify-between gap-1 leading-tight">
                                   <span className="font-mono text-[10px] font-bold text-blue-700">
