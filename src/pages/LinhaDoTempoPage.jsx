@@ -768,7 +768,7 @@ export default function LinhaDoTempoPage() {
           <div style={{ minWidth: `${280 + HORAS_TIMELINE.length * LARGURA_HORA_PX}px` }}>
             {/* Header das Horas */}
             <div className="flex items-center border-b border-slate-200 bg-slate-100/70 font-semibold text-xs text-slate-600 sticky top-0 z-20">
-              <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider">
+              <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-100 text-slate-700 font-bold uppercase text-[11px] tracking-wider sticky left-0 z-30 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                 Colaboradores & Localização ({tecnicos.length})
               </div>
 
@@ -789,7 +789,7 @@ export default function LinhaDoTempoPage() {
             {isHoje && horaAgoraFloat >= HORA_INICIAL_TIMELINE && horaAgoraFloat <= (HORA_FINAL_TIMELINE + 1) && (
               <div
                 style={{ left: `${280 + linhaAgoraLeftPx}px` }}
-                className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-30 pointer-events-none"
+                className="absolute top-0 bottom-0 w-0.5 bg-rose-500 z-10 pointer-events-none"
               >
                 <div className="absolute -top-1 -left-2 bg-rose-600 text-white font-mono text-[9px] font-bold px-1 rounded shadow-xs">
                   Agora
@@ -803,7 +803,7 @@ export default function LinhaDoTempoPage() {
               <div className="divide-y divide-slate-100 animate-pulse">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="flex min-h-[96px]">
-                    <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-50 space-y-2">
+                    <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 bg-slate-50 space-y-2 sticky left-0 z-20 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-slate-200" />
                         <div className="space-y-1 flex-1">
@@ -842,7 +842,7 @@ export default function LinhaDoTempoPage() {
                   return (
                     <div key={tecnico.id} className="flex min-h-[96px] hover:bg-slate-50/50 transition-colors">
                       {/* Painel Fixo do Técnico (Esquerda) */}
-                      <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 flex flex-col justify-between bg-white z-10 shadow-xs">
+                      <div className="w-[280px] shrink-0 p-3.5 border-r border-slate-200 flex flex-col justify-between bg-white sticky left-0 z-20 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.07)]">
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
